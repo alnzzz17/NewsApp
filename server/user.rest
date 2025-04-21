@@ -1,0 +1,66 @@
+### REGISTER
+
+POST http://localhost:5000/api/user/register
+Content-Type: application/json
+
+{
+    "userName": "erllytarch", 
+    "email": "erllyta107@gmail.com", 
+    "password": "erllytarachma107", 
+    "fullName": "Erllyta Rachma"
+}
+
+### REGISTER 2
+
+POST http://localhost:5000/api/user/register
+Content-Type: application/json
+
+{
+    "userName": "onychinusn109", 
+    "email": "qinche@gmail.com", 
+    "password": "yourdragon109", 
+    "fullName": "Sylus Qin"
+}
+
+### LOGIN ADMIN
+POST http://localhost:5000/api/user/login
+Content-Type: application/json
+
+{
+    "email": "admin@gmail.com", 
+    "password":"xADMINsatux"
+}
+
+### EDIT ROLE AS ADMIN
+PUT http://localhost:5000/api/admin/user-update/2"
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlck5hbWUiOiJhZG1pbl8wMSIsImZ1bGxOYW1lIjoiQWRtaW4gMDEiLCJyb2xlSWQiOjEsImlhdCI6MTc0Mzk5Nzk4MywiZXhwIjoxNzQ0MDAxNTgzfQ.qobZbcQhyb40mOQb1j4A1ic0t_goaSkUFxz2PF1rzsQ
+Content-Type: application/json
+
+{
+    "roleId": 2
+}
+
+### LOGIN USER
+POST http://localhost:5000/api/user/login
+Content-Type: application/json
+
+{
+    "email": "qinche@gmail.com", 
+    "password": "yourdragon109"
+}
+
+### EDIT DATA AS USER
+PUT http://localhost:5000/api/user/edit
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwidXNlck5hbWUiOiJlcmxseXRhcmNoIiwiZnVsbE5hbWUiOiJFcmxseXRhIFJhY2htYSIsInJvbGVJZCI6MiwiaWF0IjoxNzQ0MDMwNDU0LCJleHAiOjE3NDQwMzQwNTR9.J-A72JZICOekIterdbcGQneCQP81VLAR__RV24VIu8M
+Content-Type: application/json
+
+{
+    "userName": "erllytarachma10",
+    "email": "erllytarachma10@gmail.com"
+}
+
+### DELETE USER
+
+DELETE http://localhost:5000/api/user/delete/4
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlck5hbWUiOiJhZG1pbl8wMSIsImZ1bGxOYW1lIjoiQWRtaW4gMDEiLCJyb2xlSWQiOjEsImlhdCI6MTc0NDAzMjA2NCwiZXhwIjoxNzQ0MDM1NjY0fQ.U3ziw-HJzjlgZwGU_pdNin-Zy9zkcr5lYvUYpNl59uA
+Content-Type: application/json
