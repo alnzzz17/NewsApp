@@ -2,6 +2,17 @@ require('dotenv').config();
 const express = require('express');
 const app = express();
 
+
+const path = require('path');
+
+// Serve Static Files
+app.use(express.static(path.join(__dirname, '../client')));
+
+// Default route - serve public_dashboard.html
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, '../client/pages/public_dashboard.html'));
+});
+
 // === Import Routers ===
 const newsRouter = require("./routes/newsRoute");
 const userRouter = require("./routes/userRoute");
@@ -14,8 +25,8 @@ app.use(express.urlencoded({ extended: false }));
 // === CORS Configuration ===
 app.use((req, res, next) => {
     res.header("Access-Control-Allow-Origin", "*");
-    res.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS, PUT, DELETE, PATCH");
-    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
+    res.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS, PUT, DELETE");
+    res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
     next();
 });
 
@@ -28,11 +39,6 @@ app.options('*', (req, res) => {
 app.use("/api/news", newsRouter);      // => e.g. /api/news/new, /api/news/get/:id
 app.use("/api/user", userRouter);     // => e.g. /api/users/register
 app.use("/api/categories", categoryRouter); // => e.g. /api/categories/all
-
-// === Default Root Route ===
-app.get("/", (req, res) => {
-    res.json({ message: "Welcome to the API" });
-});
 
 // === Start Server After Syncing DB Associations ===
 const association = require('./utils/dbAssoc');

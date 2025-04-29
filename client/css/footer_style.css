@@ -1,0 +1,89 @@
+/* Footer */
+.footer {
+    background-color: #111;
+    color: #fff;
+    padding: 2rem;
+    font-family: Arial, sans-serif;
+}
+
+.footer-content {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 2rem;
+}
+
+.footer-section {
+    flex: 1 1 200px;
+}
+
+.footer-section p {
+    margin-bottom: 0.7rem;
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+.footer-section strong {
+    font-weight: bold;
+}
+
+.footer-section h3 {
+    font-size: 1rem;
+    margin-bottom: 1rem;
+    font-weight: bold;
+}
+
+.footer ul {
+    list-style: none;
+    padding: 0;
+}
+
+.footer ul li {
+    margin: 0.5rem 0;
+    display: flex;
+    align-items: center;
+}
+
+.footer a {
+    color: white;
+    text-decoration: none;
+    font-size: 0.9rem;
+}
+
+.footer a:hover {
+    text-decoration: underline;
+}
+
+.icon {
+    width: 20px;
+    height: 20px;
+    margin-right: 0.5rem;
+}
+
+.footer-logos {
+    text-align: left;
+}
+
+.logo-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.footer-logo {
+    max-height: 70px; /* ← PERBESAR LOGO */
+    width: auto;
+}
+
+.footer-description {
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+.footer-bottom {
+    text-align: left; /* ← Sesuai permintaan */
+    margin-top: 2rem;
+    font-size: 0.8rem;
+    color: #aaa;
+}

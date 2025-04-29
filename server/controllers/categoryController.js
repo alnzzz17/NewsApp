@@ -20,7 +20,6 @@ const createCategory = async (req, res) => {
 const getAllCategories = async (req, res) => {
     try {
         const categories = await Category.findAll({ order: [["id", "ASC"]] });
-
         res.status(200).json({
             status: "success",
             total: categories.length,
@@ -30,6 +29,7 @@ const getAllCategories = async (req, res) => {
         res.status(500).json({ status: "error", message: error.message });
     }
 };
+
 
 // GET CATEGORY BY ID
 const getCategoryById = async (req, res) => {

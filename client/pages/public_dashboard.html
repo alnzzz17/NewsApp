@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Publikasi</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Raleway:ital,wght@0,100..900;1,100..900&display=swap');
+    </style>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/navbar_style.css">
+    <link rel="stylesheet" href="../css/categorybar_style.css">
+    <link rel="stylesheet" href="../css/footer_style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+
+<body>
+    <header id="navbar"></header>
+    <nav id="category-bar"></nav>
+    <section id="ads-top"></section>
+
+    <main>
+        <section id="section-a" class="section"></section>
+        <section id="section-b" class="section"></section>
+        <section id="section-c" class="section"></section>
+    </main>
+
+    <section id="ads-bottom"></section>
+    <footer id="footer"></footer>
+
+    <script src="./src/utils.js"></script>
+    <script src="./src/components/navbar.js"></script>
+    <script src="./src/components/footer.js"></script>
+    <script src="./src/components/sectionA.js"></script>
+    <script src="./src/components/sectionB.js"></script>
+    <script src="./src/components/sectionC.js"></script>
+    <script src="./src/components/adsSection.js"></script>
+
+    <script>
+        // Fungsi debug: menampilkan data yang diterima dari API
+        function logData(url) {
+            fetch(url)
+                .then(response => {
+                    console.log('Response status:', response.status);
+                    return response.json();
+                })
+                .then(data => console.log('Data received:', data))
+                .catch(error => console.error('Fetch error:', error));
+        }
+
+        // Mengambil kategori dengan error handling lebih baik
+        function fetchCategories() {
+            console.log('Fetching categories from:', `${BASE_URL}/api/categories`);
+
+            fetch(`${BASE_URL}/api/categories`, {  // Hapus slash di akhir untuk konsistensi
+                method: "GET",
+                headers: {
+                    "Accept": "application/json",
+                    "Content-Type": "application/json"
+                },
+                mode: 'cors' // Tambahkan mode cors
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Categories data:', data);
+                    if (data && Array.isArray(data.data)) {
+                        displayCategories(data.data);
+                    } else {
+                        console.error("Data format tidak valid:", data);
+                        // Menampilkan pesan error atau kategori default
+                        displayCategories([{ id: 1, name: "Default 1" }, { id: 2, name: "Default 2" }]);
+                    }
+                })
+                .catch(error => {
+                    console.error("Error fetching categories:", error);
+                    // Menampilkan kategori default jika fetch gagal
+                    displayCategories([{ id: 1, name: "Default 1" }, { id: 2, name: "Default 2" }]);
+                });
+        }
+
+        // Menampilkan kategori dengan lebih banyak debug info
+        function displayCategories(categories) {
+            console.log('Displaying categories:', categories);
+            const categoryBarContainer = document.getElementById('category-bar');
+
+            if (!categoryBarContainer) {
+                console.error('Category bar container not found!');
+                return;
+            }
+
+            // Mengosongkan container
+            categoryBarContainer.innerHTML = "";
+
+            const visibleCategories = categories.slice(0, 7)
+                .map(cat => `<a href="${BASE_URL}/category/${cat.id}" class="category-link">${cat.name}</a>`)
+                .join("");
+
+            const hiddenCategories = categories.slice(7)
+                .map(cat => `<a href="${BASE_URL}/category/${cat.id}" class="category-link">${cat.name}</a>`)
+                .join("");
+
+            const html = `
+    <div class="category-bar">
+        <div class="categories">
+            ${visibleCategories}
+            ${hiddenCategories ? `
+            <div class="dropdown">
+                <button class="more-btn">More ▼</button>
+                <div class="dropdown-content">
+                    ${hiddenCategories}
+                </div>
+            </div>` : ''}
+        </div>
+        <div class="right-section">
+            <div class="search-bar">
+                <input type="text" placeholder="Cari berita..." class="search-input" id="searchInput">
+                <button class="search-button" id="searchButton"><i class="fas fa-search"></i></button>
+            </div>
+            <button class="sign-in-button" id="signInButton">Sign In</button>
+        </div>
+    </div>
+`;
+
+
+            categoryBarContainer.innerHTML += html;
+        }
+    </script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                document.getElementById('navbar').innerHTML = await renderNavbar();
+                fetchCategories();
+                document.getElementById('footer').innerHTML = await renderFooter();
+                document.getElementById('section-a').innerHTML = await renderSectionA();
+                document.getElementById('section-b').innerHTML = await renderSectionB();
+                document.getElementById('section-c').innerHTML = await renderSectionC();
+                document.getElementById('ads-top').innerHTML = await renderAdsSection();
+                document.getElementById('ads-bottom').innerHTML = await renderAdsSection();
+            } catch (error) {
+                console.error('Error rendering components:', error);
+            }
+        });
+    </script>
+</body>
+
+</html>

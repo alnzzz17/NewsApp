@@ -1,0 +1,24 @@
+/* Navbar */
+.navbar {
+    background-color: black;
+    color: #ffffff;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+}
+
+.navbar .menu {
+    display: flex;
+    gap: 1rem;
+}
+
+.navbar .menu a {
+    color: #8C8C8C;
+}
+
+.navbar .menu a:hover {
+    color: #ffffff;
+    transition: color 0.3s ease;
+
+}
