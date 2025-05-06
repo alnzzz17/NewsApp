@@ -1,5 +1,5 @@
 async function renderFooter() {
-    return `
+  return `
     <footer class="footer">
         <div class="footer-content">
             

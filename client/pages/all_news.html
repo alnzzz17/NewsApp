@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Semua Berita</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700&display=swap');
+    </style>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/navbar_style.css">
+    <link rel="stylesheet" href="../css/categorybar_style.css">
+    <link rel="stylesheet" href="../css/news_card.css">
+    <link rel="stylesheet" href="../css/all_news.css">
+    <link rel="stylesheet" href="../css/footer_style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+
+<body>
+    <header id="navbar"></header>
+    <nav id="category-bar"></nav>
+    <section class="ads-section">IKLAN</section>
+
+    <main class="all-news-container">
+        <section id="all-news">
+            <!-- Berita dimuat disini -->
+        </section>
+    </main>
+
+    <section id="ads-section"></section>
+    <footer id="footer"></footer>
+
+    <script src="../src/utils.js"></script>
+    <script src="../src/components/navbar.js"></script>
+    <script src="../src/components/footer.js"></script>
+    <script src="../src/components/ads_section.js"></script>
+
+    <script>
+        const ITEMS_PER_PAGE = 12; // Jumlah berita per halaman
+
+        function formatDate(dateStr) {
+            const options = { year: 'numeric', month: 'short', day: 'numeric' };
+            return new Date(dateStr).toLocaleDateString('id-ID', options);
+        }
+
+        async function fetchData(url) {
+            try {
+                const response = await fetch(url, {
+                    method: "GET",
+                    headers: {
+                        "Accept": "application/json",
+                        "Content-Type": "application/json"
+                    },
+                    mode: 'cors'
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                return data;
+            } catch (error) {
+                console.error(`Error fetching from ${url}:`, error);
+                throw error;
+            }
+        }
+
+        // Fungsi untuk mengambil kategori
+        async function fetchCategories() {
+            const categoryBarContainer = document.getElementById('category-bar');
+
+            // Menampilkan skeleton loading
+            categoryBarContainer.innerHTML = `
+                <div class="category-bar skeleton">
+                    <div class="categories">
+                        ${Array(5).fill().map(() => `<span class="skeleton-item" style="width: 80px; height: 30px;"></span>`).join('')}
+                    </div>
+                    <div class="right-section">
+                        <div class="search-bar skeleton-item" style="width: 200px; height: 30px;"></div>
+                        <div class="sign-in-button skeleton-item" style="width: 80px; height: 30px;"></div>
+                    </div>
+                </div>
+            `;
+
+            try {
+                const response = await fetch(`${BASE_URL}/api/categories`, {
+                    method: "GET",
+                    headers: {
+                        "Accept": "application/json",
+                        "Content-Type": "application/json"
+                    },
+                    mode: 'cors'
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                if (data && data.data && Array.isArray(data.data)) {
+                    displayCategories(data.data);
+                } else {
+                    throw new Error("Data format tidak valid");
+                }
+            } catch (error) {
+                console.error("Error fetching categories:", error);
+                // Menampilkan kategori default jika fetch gagal
+                displayCategories([
+                    { id: 1, name: "Politik" },
+                    { id: 2, name: "Ekonomi" },
+                    { id: 3, name: "Olahraga" },
+                    { id: 4, name: "Hiburan" },
+                    { id: 5, name: "Teknologi" }
+                ]);
+            }
+        }
+
+        // Fungsi untuk menampilkan kategori
+        function displayCategories(categories) {
+            const categoryBarContainer = document.getElementById('category-bar');
+
+            if (!categoryBarContainer) {
+                console.error('Category bar container not found!');
+                return;
+            }
+
+            const visibleCategories = categories.length > 7
+                ? categories.slice(0, 7)
+                : categories;
+
+            const hiddenCategories = categories.length > 7
+                ? categories.slice(7)
+                : [];
+
+            const html = `
+                <div class="category-bar" id="categoryBar">
+                    <div class="categories">
+                        ${visibleCategories.map(cat => `
+                            <a onclick="toAllNews('${cat.id}')" class="category-link">
+                                ${cat.name}
+                            </a>
+                        `).join("")}
+                        
+                        ${hiddenCategories.length > 0 ? `
+                            <div class="dropdown">
+                                <button class="more-btn">More ▼</button>
+                                <div class="dropdown-content">
+                                    ${hiddenCategories.map(cat => `
+                                        <a onclick="toAllNews('${cat.id}')" class="category-link">
+                                            ${cat.name}
+                                        </a>
+                                    `).join("")}
+                                </div>
+                            </div>
+                        ` : ''}
+                    </div>
+                    <div class="right-section">
+                        <div class="search-bar">
+                            <input type="text" placeholder="Cari berita..." class="search-input" id="searchInput">
+                            <button class="search-button" id="searchButton">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                        <button class="sign-in-button" id="signInButton">Sign In</button>
+                    </div>
+                </div>
+            `;
+
+            categoryBarContainer.innerHTML = html;
+
+            // Menambahkan event listener untuk dropdown
+            const moreBtn = document.querySelector('.more-btn');
+            if (moreBtn) {
+                moreBtn.addEventListener('click', function () {
+                    this.nextElementSibling.classList.toggle('show');
+                });
+            }
+        }
+
+        // Fungsi untuk mendapatkan parameter dari URL
+        function getUrlParams() {
+            const params = new URLSearchParams(window.location.search);
+            return {
+                section: params.get('section'),
+                categoryId: params.get('categoryId'),
+                categoryName: params.get('categoryName')
+            };
+        }
+
+        async function fetchAllNews(page = 1) {
+            const params = new URLSearchParams(window.location.search);
+            const categoryId = params.get('categoryId');
+            const section = params.get('section');
+
+            const allNewsContainer = document.getElementById("all-news");
+
+            // Menentukan judul berdasarkan parameter
+            let pageTitle = "Semua Berita";
+            if (categoryId) {
+                // Jika ada categoryId, diambil nama kategori
+                try {
+                    const category = await fetchCategoryName(categoryId);
+                    pageTitle = category.name || "Berita Kategori";
+                } catch (error) {
+                    console.error("Error fetching category name:", error);
+                    pageTitle = "Berita Kategori";
+                }
+            } else if (section === "latest") {
+                pageTitle = "Berita Terbaru";
+            }
+
+            // Menampilkan loading state
+            allNewsContainer.innerHTML = `
+        <div class="section-header">
+            <h2 class="section-title">${pageTitle}</h2>
+        </div>
+        <div class="news-grid">
+            ${Array(ITEMS_PER_PAGE).fill().map(() => `
+                <div class="news-card skeleton">
+                    <!-- ... skeleton loading ... -->
+                </div>
+            `).join('')}
+        </div>
+    `;
+
+            try {
+                let url = `${BASE_URL}/api/news/all`;
+                if (categoryId) {
+                    url = `${BASE_URL}/api/news/category/${categoryId}`;
+                }
+
+                const result = await fetchData(url);
+
+                if (result.status === "success" && Array.isArray(result.data)) {
+                    const publishedNews = result.data
+                        .filter(item => item.status === "DIPUBLIKASIKAN")
+                        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+                    renderAllNews(publishedNews, page, pageTitle);
+                } else {
+                    allNewsContainer.innerHTML = `
+                        <div class="error-message">
+                            <p>Terjadi kesalahan saat memuat berita. Silakan coba lagi nanti.</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                allNewsContainer.innerHTML = `
+                    <div class="error-message">
+                        <p>Terjadi kesalahan saat memuat berita. Silakan coba lagi nanti.</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Fungsi untuk mengambil nama kategori
+        async function fetchCategoryName(categoryId) {
+            try {
+                const response = await fetch(`${BASE_URL}/api/categories/${categoryId}`, {
+                    method: "GET",
+                    headers: {
+                        "Accept": "application/json",
+                        "Content-Type": "application/json"
+                    },
+                    mode: 'cors'
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                return data.data || { name: "Kategori" };
+            } catch (error) {
+                console.error("Error fetching category:", error);
+                return { name: "Kategori" };
+            }
+        }
+        // renderAllNews untuk menerima title
+        function renderAllNews(newsItems, currentPage = 1, title = "Semua Berita") {
+            const allNewsContainer = document.getElementById("all-news");
+            const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+            const paginatedItems = newsItems.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+            const totalPages = Math.ceil(newsItems.length / ITEMS_PER_PAGE);
+
+            const newsHTML = `
+        <div class="section-header">
+            <h2 class="section-title">${title}</h2>
+        </div>
+        <div class="news-grid">
+            ${paginatedItems.map(item => `
+                <div class="news-card" onclick="toNewsDetail('${item.id}')">
+                    <div class="thumbnail">
+                        <img src="${item.image_url || 'https://via.placeholder.com/400x225?text=No+Image'}"
+                             alt="${item.title}"
+                             onerror="this.src='https://via.placeholder.com/400x225?text=Gambar+Tidak+Tersedia'"/>
+                    </div>
+                    <div class="news-info">
+                        <h3 class="news-title">${item.title}</h3>
+                        <p class="news-meta">
+                            <span class="news-category">${item.category?.name || "Umum"}</span> •
+                            <span class="news-date">${formatDate(item.createdAt)}</span>
+                        </p>
+                        ${item.excerpt ? `<p class="news-excerpt">${item.excerpt}</p>` : ''}
+                        <a class="read-more" href="./news_detail.html?id=${item.id}">Baca Selengkapnya</a>
+                    </div>
+                </div>
+            `).join('')}
+        </div>
+    `;
+
+            // Pagination controls
+            let paginationHTML = '<div class="pagination">';
+            if (currentPage > 1) {
+                paginationHTML += `<button onclick="fetchAllNews(${currentPage - 1})">&lt; Sebelumnya</button>`;
+            }
+
+            const startPage = Math.max(1, currentPage - 2);
+            const endPage = Math.min(totalPages, startPage + 4);
+            for (let i = startPage; i <= endPage; i++) {
+                paginationHTML += `<button ${i === currentPage ? 'class="active"' : ''} onclick="fetchAllNews(${i})">${i}</button>`;
+            }
+
+            if (currentPage < totalPages) {
+                paginationHTML += `<button onclick="fetchAllNews(${currentPage + 1})">Selanjutnya &gt;</button>`;
+            }
+            paginationHTML += '</div>';
+
+            allNewsContainer.innerHTML = newsHTML + paginationHTML;
+        }
+
+        // Inisialisasi halaman
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                // Load components
+                document.getElementById('navbar').innerHTML = await renderNavbar();
+                document.getElementById('footer').innerHTML = await renderFooter();
+                document.getElementById('ads-section').innerHTML = await renderAdsSection();
+
+                // Load categories and news
+                await fetchCategories();
+                await fetchAllNews();
+
+                // Highlight kategori aktif
+                const { categoryId } = getUrlParams();
+                if (categoryId) {
+                    highlightActiveCategory(categoryId);
+                }
+            } catch (error) {
+                console.error('Error initializing page:', error);
+            }
+        });
+
+        // Mobile menu toggle
+        document.addEventListener('DOMContentLoaded', function () {
+            const hamburgerBtn = document.getElementById('hamburgerBtn');
+            const navMenu = document.getElementById('navMenu');
+
+            if (hamburgerBtn && navMenu) {
+                hamburgerBtn.addEventListener('click', () => {
+                    navMenu.classList.toggle('show');
+                });
+            }
+        });
+
+        function toNewsDetail(newsId) {
+            window.location.href = `./news_detail.html?id=${newsId}`;
+        }
+
+        async function toAllNews(param) {
+            try {
+                // Jika param adalah object dengan categoryId (dari kategori)
+                if (typeof param === 'object' && param.categoryId) {
+                    window.location.href = `./all_news.html?categoryId=${param.categoryId}`;
+                }
+                // Jika param adalah string dan berupa ID kategori (dari category bar)
+                else if (typeof param === 'string' && /^\d+$/.test(param)) {
+                    window.location.href = `./all_news.html?categoryId=${param}`;
+                }
+                // Untuk semua kasus lainnya (termasuk "Berita Terbaru")
+                else {
+                    window.location.href = `./all_news.html?section=latest`;
+                }
+            } catch (error) {
+                console.error("Error in toAllNews:", error);
+                // Fallback ke section latest jika ada error
+                window.location.href = `./all_news.html?section=latest`;
+            }
+        }
+    </script>
+</body>
+
+</html>

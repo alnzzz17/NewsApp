@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detail Berita - Publikasi</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700&display=swap');
+    </style>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/navbar_style.css">
+    <link rel="stylesheet" href="../css/categorybar_style.css">
+    <link rel="stylesheet" href="../css/footer_style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/news_detail.css">
+</head>
+
+<body>
+    <header id="navbar"></header>
+    <nav id="category-bar"></nav>
+
+    <main>
+        <section id="news-section"></section> 
+            <!-- Berita dimuat disini -->
+        <aside class="ads-section">IKLAN</aside>
+    </main>
+
+    <section id="ads-section">IKLAN</section>
+    <footer id="footer"></footer>
+
+    <script src="/src/utils.js"></script>
+    <script src="/src/components/navbar.js"></script>
+    <script src="/src/components/footer.js"></script>
+    <script src="/src/components/ads_section.js"></script>
+    <script>
+        async function fetchData(url) {
+            const response = await fetch(url);
+            if (!response.ok) {
+                throw new Error('Gagal memuat data');
+            }
+            return await response.json();
+        }
+
+        function formatDate(dateString) {
+            const options = { year: 'numeric', month: 'long', day: 'numeric' };
+            return new Date(dateString).toLocaleDateString('id-ID', options);
+        }
+
+        function formatTime(dateString) {
+            return new Date(dateString).toLocaleTimeString('id-ID', {
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false
+            });
+        }
+
+        function setupShareButtons() {
+            // WhatsApp share
+            document.querySelector('.fa-whatsapp')?.addEventListener('click', () => {
+                const url = window.location.href;
+                const text = document.title;
+                window.open(`https://wa.me/?text=${encodeURIComponent(text + '\n\n' + url)}`, '_blank');
+            });
+
+            // Facebook share
+            document.querySelector('.fa-facebook')?.addEventListener('click', () => {
+                const url = window.location.href;
+                window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank');
+            });
+
+            // Copy link
+            document.querySelector('.fa-copy')?.addEventListener('click', () => {
+                const url = window.location.href;
+                navigator.clipboard.writeText(url).then(() => {
+                    alert('Link berita telah disalin!');
+                });
+            });
+        }
+
+        // Fungsi untuk mengambil kategori
+        async function fetchCategories() {
+            const categoryBarContainer = document.getElementById('category-bar');
+
+            // Menampilkan skeleton loading
+            categoryBarContainer.innerHTML = `
+                <div class="category-bar skeleton">
+                    <div class="categories">
+                        ${Array(5).fill().map(() => `<span class="skeleton-item" style="width: 80px; height: 30px;"></span>`).join('')}
+                    </div>
+                    <div class="right-section">
+                        <div class="search-bar skeleton-item" style="width: 200px; height: 30px;"></div>
+                        <div class="sign-in-button skeleton-item" style="width: 80px; height: 30px;"></div>
+                    </div>
+                </div>
+            `;
+
+            try {
+                const response = await fetch(`${BASE_URL}/api/categories`, {
+                    method: "GET",
+                    headers: {
+                        "Accept": "application/json",
+                        "Content-Type": "application/json"
+                    },
+                    mode: 'cors'
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                if (data && data.data && Array.isArray(data.data)) {
+                    displayCategories(data.data);
+                } else {
+                    throw new Error("Data format tidak valid");
+                }
+            } catch (error) {
+                console.error("Error fetching categories:", error);
+                // Menampilkan kategori default jika fetch gagal
+                displayCategories([
+                    { id: 1, name: "Politik" },
+                    { id: 2, name: "Ekonomi" },
+                    { id: 3, name: "Olahraga" },
+                    { id: 4, name: "Hiburan" },
+                    { id: 5, name: "Teknologi" }
+                ]);
+            }
+        }
+
+        // Fungsi untuk menampilkan kategori
+        function displayCategories(categories) {
+            const categoryBarContainer = document.getElementById('category-bar');
+
+            if (!categoryBarContainer) {
+                console.error('Category bar container not found!');
+                return;
+            }
+
+            const visibleCategories = categories.length > 7
+                ? categories.slice(0, 7)
+                : categories;
+
+            const hiddenCategories = categories.length > 7
+                ? categories.slice(7)
+                : [];
+
+            const html = `
+                <div class="category-bar" id="categoryBar">
+                    <div class="categories">
+                        ${visibleCategories.map(cat => `
+                            <a href="${BASE_URL}/api/news/category/${cat.id}" class="category-link">
+                                ${cat.name}
+                            </a>
+                        `).join("")}
+                        
+                        ${hiddenCategories.length > 0 ? `
+                            <div class="dropdown">
+                                <button class="more-btn">More ▼</button>
+                                <div class="dropdown-content">
+                                    ${hiddenCategories.map(cat => `
+                                        <a href="${BASE_URL}/api/news/category/${cat.id}" class="category-link">
+                                            ${cat.name}
+                                        </a>
+                                    `).join("")}
+                                </div>
+                            </div>
+                        ` : ''}
+                    </div>
+                    <div class="right-section">
+                        <div class="search-bar">
+                            <input type="text" placeholder="Cari berita..." class="search-input" id="searchInput">
+                            <button class="search-button" id="searchButton">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                        <button class="sign-in-button" id="signInButton">Sign In</button>
+                    </div>
+                </div>
+            `;
+
+            categoryBarContainer.innerHTML = html;
+
+            // Menambahkan event listener untuk dropdown
+            const moreBtn = document.querySelector('.more-btn');
+            if (moreBtn) {
+                moreBtn.addEventListener('click', function () {
+                    this.nextElementSibling.classList.toggle('show');
+                });
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", async () => {
+            try {
+                // Render komponen utama
+                document.getElementById('navbar').innerHTML = await renderNavbar();
+                await fetchCategories();
+                document.getElementById('footer').innerHTML = await renderFooter();
+                document.getElementById('ads-section').innerHTML = await renderAdsSection();
+
+                // Hamburger menu
+                const hamburgerBtn = document.getElementById('hamburgerBtn');
+                if (hamburgerBtn) {
+                    hamburgerBtn.addEventListener('click', () => {
+                        const navMenu = document.getElementById('navMenu');
+                        if (navMenu) navMenu.classList.toggle('show');
+                    });
+                }
+
+                // Load news detail
+                const section = document.getElementById("news-section");
+                const urlParams = new URLSearchParams(window.location.search);
+                const newsId = urlParams.get("id");
+
+                if (!newsId) {
+                    section.innerHTML = "<div class='error-message'>Berita tidak ditemukan.</div>";
+                    return;
+                }
+
+                const res = await fetchData(`${BASE_URL}/api/news/get/${newsId}`);
+                if (!res.data) throw new Error('Data berita tidak valid');
+
+                const news = res.data;
+                const formattedDate = formatDate(news.createdAt);
+                const formattedTime = formatTime(news.createdAt);
+
+                section.innerHTML = `
+                    <div class="news-wrapper">
+                        <div class="ads-section">IKLAN</div>
+                        <h1>${news.title}</h1>
+                        <div class="meta">
+                            <span>${news.user?.fullName || 'Admin'} • <span class="category">${news.category?.name || 'Umum'}</span></span><br>
+                            <span>${formattedDate} &nbsp; ${formattedTime} WIB</span>
+                        </div>
+                        <img src="${news.image_url || 'https://via.placeholder.com/800x450?text=Gambar+Berita'}" 
+                            alt="${news.title}" 
+                            class="news-image"
+                            onerror="this.src='https://via.placeholder.com/800x450?text=Gambar+Tidak+Tersedia'"/>
+                        <div class="news-content">${news.content.replace(/\n/g, "<br><br>")}</div>
+
+                        <div class="share-section">
+                            <strong>Bagikan:</strong>
+                            <i class="fab fa-whatsapp" title="Bagikan via WhatsApp"></i>
+                            <i class="fab fa-facebook" title="Bagikan via Facebook"></i>
+                            <i class="fa fa-copy" title="Salin tautan"></i>
+                        </div>
+
+                        <div class="comment-section">
+                            <h3>Berikan Komentar</h3>
+                            <div class="comment-box">
+                                <input type="text" placeholder="Tulis Komentar Anda...">
+                                <button>Kirim <i class="fas fa-paper-plane"></i></button>
+                            </div>
+                            <div class="comment">
+                                <div class="avatar"></div>
+                                <div>
+                                    <p><strong>Nama Pengguna</strong> <span>1 jam yang lalu</span></p>
+                                    <p>Ini adalah contoh komentar. Fitur komentar dapat diintegrasikan dengan backend.</p>
+                                    <a href="#">Balas</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                // Setup share buttons
+                setupShareButtons();
+
+            } catch (err) {
+                console.error('Error:', err);
+                const section = document.getElementById("news-section");
+                section.innerHTML = `
+                    <div class="error-message">
+                        <h2>Gagal Memuat Berita</h2>
+                        <p>${err.message || 'Terjadi kesalahan saat memuat berita.'}</p>
+                        <button onclick="window.location.href='public_dashboard.html'">Kembali ke Beranda</button>
+                    </div>
+                `;
+            }
+        });
+    </script>
+</body>
+
+</html>

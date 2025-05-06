@@ -1,20 +1,30 @@
 .category-bar {
-    position: sticky;
     top: 0;
     z-index: 1000;
-    background-color: #000000;
+    background-color: #000;
     color: #fff;
     display: flex;
     align-items: center;
-    padding: 0.5rem 2rem;
-    gap: 1rem;
+    justify-content: space-between;
+    padding: 0.5rem 1rem;
     font-size: 0.9rem;
+    width: 100%;
+    flex-wrap: wrap;
+    position: sticky;
+    top: 0;
+}
+
+.category-bar .left-section {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 1;
+    flex-wrap: wrap;
 }
 
 .category-bar .categories {
     display: flex;
     flex-wrap: wrap;
-    flex: 1;
     gap: 0.5rem;
 }
 
@@ -22,18 +32,20 @@
     color: #fff;
     padding: 0.5rem 0.75rem;
     border-radius: 4px;
-    transition: color 0.3s ease;
+    transition: background 0.3s ease;
+    white-space: nowrap;
     flex-shrink: 0;
+    text-decoration: none;
 }
 
 .category-bar a:hover {
-    color: #8C8C8C;
+    background-color: #555;
 }
 
-
-/* Dropdown "MORE" */
+/* DROPDOWN "MORE" */
 .dropdown {
     position: relative;
+    display: inline-block;
 }
 
 .more-btn {
@@ -43,12 +55,13 @@
     font-size: 0.9rem;
     cursor: pointer;
     padding: 0.5rem 0.75rem;
-    transition: color 0.3s ease; /* Tambahkan transition ke color */
     font-family: inherit;
+    transition: background-color 0.3s ease;
 }
 
 .more-btn:hover {
-    color: #8C8C8C;
+    background-color: #555;
+    border-radius: 4px;
 }
 
 .dropdown-content {
@@ -60,30 +73,33 @@
     min-width: 150px;
     box-shadow: 0 4px 6px rgba(0,0,0,0.1);
     z-index: 999;
+    border-radius: 4px;
+    overflow: hidden;
 }
 
 .dropdown-content a {
     display: block;
-    padding: 0.5rem;
+    padding: 0.5rem 1rem;
     color: white;
 }
 
 .dropdown-content a:hover {
-    color: #555;
+    background-color: #555;
 }
 
 .dropdown:hover .dropdown-content {
     display: block;
 }
 
-/* Search Bar */
+/* === SEARCH BAR === */
 .search-bar {
-    margin-left: auto;
     display: flex;
     align-items: center;
     background-color: #555;
     border-radius: 10px;
-    padding: 0.1rem 0.75rem;
+    padding: 0.25rem 0.5rem;
+    min-width: 200px;
+    max-width: 300px;
 }
 
 .search-bar input {
@@ -91,144 +107,30 @@
     background: transparent;
     color: white;
     padding: 0.5rem;
-    width: 150px;
+    width: 100%;
     outline: none;
+    font-family: inherit;
+}
+
+.search-bar input::placeholder {
+    color: #ccc;
 }
 
 .search-bar button {
     background: none;
-    border: none;/* CATEGORY BAR STYLES */
-    .category-bar {
-        position: sticky;
-        top: 0;
-        z-index: 1000;
-        background-color: #333;
-        color: #fff;
-        display: flex;
-        align-items: center;
-        padding: 0.5rem 2rem;
-        gap: 1rem;
-        font-size: 0.9rem;
-        width: 100%;
-    }
-    
-    .category-bar a {
-        color: #fff;
-        padding: 0.5rem 0.75rem;
-        border-radius: 4px;
-        transition: background 0.3s ease;
-        white-space: nowrap;
-    }
-    
-    .category-bar a:hover {
-        background-color: #555;
-    }
-    
-    /* Dropdown "MORE" */
-    .dropdown {
-        position: relative;
-        display: inline-block;
-    }
-    
-    .more-btn {
-        background: none;
-        border: none;
-        color: white;
-        font-size: 0.9rem;
-        cursor: pointer;
-        padding: 0.5rem 0.75rem;
-        font-family: inherit;
-    }
-    
-    .more-btn:hover {
-        background-color: #555;
-        border-radius: 4px;
-    }
-    
-    .dropdown-content {
-        display: none;
-        position: absolute;
-        background-color: #333;
-        top: 100%;
-        left: 0;
-        min-width: 150px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        z-index: 999;
-        border-radius: 4px;
-        overflow: hidden;
-    }
-    
-    .dropdown-content a {
-        display: block;
-        padding: 0.5rem 1rem;
-        color: white;
-    }
-    
-    .dropdown-content a:hover {
-        background-color: #555;
-    }
-    
-    .dropdown:hover .dropdown-content {
-        display: block;
-    }
-    
-    /* Search Bar */
-    .search-bar {
-        margin-left: auto;
-        display: flex;
-        align-items: center;
-        background-color: #555;
-        border-radius: 20px;
-        padding: 0.25rem 0.5rem;
-        min-width: 200px;
-    }
-    
-    .search-bar input {
-        border: none;
-        background: transparent;
-        color: white;
-        padding: 0.5rem;
-        width: 100%;
-        outline: none;
-        font-family: inherit;
-    }
-    
-    .search-bar input::placeholder {
-        color: #ccc;
-    }
-    
-    .search-bar button {
-        background: none;
-        border: none;
-        color: white;
-        cursor: pointer;
-        font-size: 1rem;
-        padding: 0 0.5rem;
-    }
-    
-    /* Responsive adjustments */
-    @media (max-width: 768px) {
-        .category-bar {
-            padding: 0.5rem 1rem;
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-        }
-        
-        .search-bar {
-            display: none;
-        }
-    }
+    border: none;
     color: white;
     cursor: pointer;
     font-size: 1rem;
+    padding: 0 0.5rem;
 }
 
-/*Sign in butotn*/
+/* SIGN-IN BUTTON */
 .right-section {
     display: flex;
     align-items: center;
     gap: 1rem;
-    margin-left: auto;
+    flex-shrink: 0;
 }
 
 .sign-in-button {
@@ -245,4 +147,40 @@
 .sign-in-button:hover {
     background-color: #fff;
     color: #000;
+}
+
+/*  RESPONSIVE */
+@media (max-width: 768px) {
+    .category-bar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .left-section {
+        flex-direction: column;
+        width: 100%;
+        display: none;
+    }
+
+    .right-section {
+        justify-content: space-between;
+        padding: 0.5rem 0;
+        width: 100%;
+    }
+
+    .search-bar {
+        display: flex;
+        flex: 1;
+    }
+
+    .sign-in-button {
+        margin-left: 1rem;
+        flex-shrink: 0;
+    }
+
+    .dropdown-content {
+        position: relative;
+        box-shadow: none;
+        top: 0;
+    }
 }

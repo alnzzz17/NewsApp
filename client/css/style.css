@@ -1,4 +1,3 @@
-/* Reset */
 * {
     margin: 0;
     padding: 0;
@@ -10,6 +9,7 @@ body {
     font-optical-sizing: auto;
     font-weight: 500;
     font-style: normal;
+    width: 100%;
 }
 
 a {
@@ -22,30 +22,6 @@ footer,
 nav,
 section {
     width: 100%;
-}
-
-/* Section General */
-.section {
-    padding: 2rem;
-}
-
-/* Section Title */
-.section-title {
-    font-size: 1.5rem;
-    margin-bottom: 1rem;
-}
-
-/* News Card */
-.news-card {
-    background-color: #f2f2f2;
-    padding: 1rem;
-    margin: 0.5rem;
-}
-
-.news-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 1rem;
 }
 
 /* Ads Section */

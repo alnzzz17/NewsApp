@@ -14,7 +14,7 @@ const {
 } = require("../controllers/newsController");
 
 // CREATE NEWS (admin & journalist only)
-router.post("/new", upload.single("image"), createNews);
+router.post("/new", upload.single("imageUrl"), createNews);
 
 // GET ALL NEWS
 router.get("/all", getAllNews);
@@ -29,10 +29,10 @@ router.get("/author/:authorId", getNewsByAuthor);
 router.get("/category/:categoryId", getNewsByCategory);
 
 // UPDATE NEWS (journalist only, only their own news)
-router.put("/edit/:id", upload.single("image"), updateNews);
+router.put("/edit/:id", upload.single("imageUrl"), updateNews);
 
 // UPDATE NEWS BY ADMIN
-router.put("/admin/update/:id", upload.single("image"), updateNewsByAdmin);
+router.put("/admin/update/:id", upload.single("imageUrl"), updateNewsByAdmin);
 
 // DELETE NEWS (admin or journalist-owner only)
 router.delete("/delete/:id", deleteNews);

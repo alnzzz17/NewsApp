@@ -2,27 +2,29 @@
 <html lang="id">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Publikasi</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Raleway:ital,wght@0,100..900;1,100..900&display=swap');
+        @import url("https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700&display=swap");
     </style>
-    <link rel="stylesheet" href="../css/style.css">
-    <link rel="stylesheet" href="../css/navbar_style.css">
-    <link rel="stylesheet" href="../css/categorybar_style.css">
-    <link rel="stylesheet" href="../css/footer_style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="../css/style.css" />
+    <link rel="stylesheet" href="../css/navbar_style.css" />
+    <link rel="stylesheet" href="../css/categorybar_style.css" />
+    <link rel="stylesheet" href="../css/news_card.css" />
+    <link rel="stylesheet" href="../css/footer_style.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
 </head>
 
 <body>
     <header id="navbar"></header>
     <nav id="category-bar"></nav>
-    <section id="ads-top"></section>
+    <section class="ads-section">IKLAN</section>
 
     <main>
-        <section id="section-a" class="section"></section>
-        <section id="section-b" class="section"></section>
+        <section id="latest" class="section">
+            <!-- Berita dimuat disini -->
+        </section>
         <section id="section-c" class="section"></section>
     </main>
 
@@ -33,120 +35,299 @@
     <script src="./src/components/navbar.js"></script>
     <script src="./src/components/footer.js"></script>
     <script src="./src/components/sectionA.js"></script>
-    <script src="./src/components/sectionB.js"></script>
     <script src="./src/components/sectionC.js"></script>
     <script src="./src/components/adsSection.js"></script>
 
     <script>
-        // Fungsi debug: menampilkan data yang diterima dari API
-        function logData(url) {
-            fetch(url)
-                .then(response => {
-                    console.log('Response status:', response.status);
-                    return response.json();
-                })
-                .then(data => console.log('Data received:', data))
-                .catch(error => console.error('Fetch error:', error));
+        // Base functions
+        function formatDate(dateStr) {
+            const options = { year: "numeric", month: "short", day: "numeric" };
+            return new Date(dateStr).toLocaleDateString("id-ID", options);
         }
 
-        // Mengambil kategori dengan error handling lebih baik
-        function fetchCategories() {
-            console.log('Fetching categories from:', `${BASE_URL}/api/categories`);
-
-            fetch(`${BASE_URL}/api/categories`, {  // Hapus slash di akhir untuk konsistensi
-                method: "GET",
-                headers: {
-                    "Accept": "application/json",
-                    "Content-Type": "application/json"
-                },
-                mode: 'cors' // Tambahkan mode cors
-            })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    console.log('Categories data:', data);
-                    if (data && Array.isArray(data.data)) {
-                        displayCategories(data.data);
-                    } else {
-                        console.error("Data format tidak valid:", data);
-                        // Menampilkan pesan error atau kategori default
-                        displayCategories([{ id: 1, name: "Default 1" }, { id: 2, name: "Default 2" }]);
-                    }
-                })
-                .catch(error => {
-                    console.error("Error fetching categories:", error);
-                    // Menampilkan kategori default jika fetch gagal
-                    displayCategories([{ id: 1, name: "Default 1" }, { id: 2, name: "Default 2" }]);
+        async function fetchData(url) {
+            try {
+                const response = await fetch(url, {
+                    method: "GET",
+                    headers: {
+                        Accept: "application/json",
+                        "Content-Type": "application/json",
+                    },
+                    mode: "cors",
                 });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                return data;
+            } catch (error) {
+                console.error(`Error fetching from ${url}:`, error);
+                throw error;
+            }
         }
 
-        // Menampilkan kategori dengan lebih banyak debug info
+        // Fungsi untuk mengambil kategori
+        async function fetchCategories() {
+            const categoryBarContainer = document.getElementById("category-bar");
+            let categories = [];
+
+            // Menampilkan skeleton loading
+            categoryBarContainer.innerHTML = `
+                <div class="category-bar skeleton">
+                    <div class="categories">
+                        ${Array(5)
+                    .fill()
+                    .map(
+                        () =>
+                            `<span class="skeleton-item" style="width: 80px; height: 30px;"></span>`
+                    )
+                    .join("")}
+                    </div>
+                    <div class="right-section">
+                        <div class="search-bar skeleton-item" style="width: 200px; height: 30px;"></div>
+                        <div class="sign-in-button skeleton-item" style="width: 80px; height: 30px;"></div>
+                    </div>
+                </div>
+            `;
+
+            try {
+                const response = await fetch(`${BASE_URL}/api/categories`, {
+                    method: "GET",
+                    headers: {
+                        Accept: "application/json",
+                        "Content-Type": "application/json",
+                    },
+                    mode: "cors",
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                if (data && data.data && Array.isArray(data.data)) {
+                    categories = data.data;
+                    displayCategories(categories);
+                } else {
+                    throw new Error("Data format tidak valid");
+                }
+            } catch (error) {
+                console.error("Error fetching categories:", error);
+                // Menampilkan kategori default jika fetch gagal
+                categories = [
+                    { id: 1, name: "Politik" },
+                    { id: 2, name: "Ekonomi" },
+                    { id: 3, name: "Olahraga" },
+                    { id: 4, name: "Hiburan" },
+                    { id: 5, name: "Teknologi" },
+                ];
+                displayCategories(categories);
+            }
+            return categories;
+        }
+
+        // Fungsi untuk menampilkan kategori
         function displayCategories(categories) {
-            console.log('Displaying categories:', categories);
-            const categoryBarContainer = document.getElementById('category-bar');
+            const categoryBarContainer = document.getElementById("category-bar");
 
             if (!categoryBarContainer) {
-                console.error('Category bar container not found!');
+                console.error("Category bar container not found!");
                 return;
             }
 
-            // Mengosongkan container
-            categoryBarContainer.innerHTML = "";
+            const visibleCategories =
+                categories.length > 7 ? categories.slice(0, 7) : categories;
 
-            const visibleCategories = categories.slice(0, 7)
-                .map(cat => `<a href="${BASE_URL}/category/${cat.id}" class="category-link">${cat.name}</a>`)
-                .join("");
-
-            const hiddenCategories = categories.slice(7)
-                .map(cat => `<a href="${BASE_URL}/category/${cat.id}" class="category-link">${cat.name}</a>`)
-                .join("");
+            const hiddenCategories =
+                categories.length > 7 ? categories.slice(7) : [];
 
             const html = `
-    <div class="category-bar">
+<div class="category-bar" id="categoryBar">
+    <div class="left-section">
         <div class="categories">
-            ${visibleCategories}
-            ${hiddenCategories ? `
-            <div class="dropdown">
-                <button class="more-btn">More ▼</button>
-                <div class="dropdown-content">
-                    ${hiddenCategories}
+            ${visibleCategories.map(cat => `
+                <a onclick="toAllNews('${cat.id}')" class="category-link">
+                    ${cat.name}
+                </a>
+            `).join("")}
+            
+            ${hiddenCategories.length > 0 ? `
+                <div class="dropdown">
+                    <button class="more-btn">More ▼</button>
+                    <div class="dropdown-content">
+                        ${hiddenCategories.map(cat => `
+                            <a onclick="toAllNews('${cat.id}')" class="category-link">
+                                ${cat.name}
+                            </a>
+                        `).join("")}
+                    </div>
                 </div>
-            </div>` : ''}
-        </div>
-        <div class="right-section">
-            <div class="search-bar">
-                <input type="text" placeholder="Cari berita..." class="search-input" id="searchInput">
-                <button class="search-button" id="searchButton"><i class="fas fa-search"></i></button>
-            </div>
-            <button class="sign-in-button" id="signInButton">Sign In</button>
+            ` : ''}
         </div>
     </div>
-`;
+    <div class="right-section">
+        <div class="search-bar">
+            <input type="text" placeholder="Cari berita..." class="search-input" id="searchInput">
+            <button class="search-button" id="searchButton">
+                <i class="fas fa-search"></i>
+            </button>
+        </div>
+        <button class="sign-in-button" id="signInButton">Sign In</button>
+    </div>
+</div>
+            `;
 
+            categoryBarContainer.innerHTML = html;
 
-            categoryBarContainer.innerHTML += html;
+            // Menambahkan event listener untuk dropdown
+            const moreBtn = document.querySelector(".more-btn");
+            if (moreBtn) {
+                moreBtn.addEventListener("click", function () {
+                    const dropdownContent =
+                        this.closest(".dropdown").querySelector(".dropdown-content");
+                    if (dropdownContent) {
+                        dropdownContent.classList.toggle("show");
+                    }
+                });
+            }
         }
-    </script>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', async () => {
+        async function fetchAllNews() {
+            const latestContainer = document.getElementById("latest");
+
             try {
-                document.getElementById('navbar').innerHTML = await renderNavbar();
-                fetchCategories();
-                document.getElementById('footer').innerHTML = await renderFooter();
-                document.getElementById('section-a').innerHTML = await renderSectionA();
-                document.getElementById('section-b').innerHTML = await renderSectionB();
-                document.getElementById('section-c').innerHTML = await renderSectionC();
-                document.getElementById('ads-top').innerHTML = await renderAdsSection();
-                document.getElementById('ads-bottom').innerHTML = await renderAdsSection();
+                const result = await fetchData(`${BASE_URL}/api/news/all`);
+
+                if (result.status === "success" && Array.isArray(result.data)) {
+                    const publishedNews = result.data
+                        .filter((item) => item.status === "DIPUBLIKASIKAN")
+                        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+                        .slice(0, 4);
+
+                    renderNewsCards(publishedNews, latestContainer, "Berita Terbaru");
+                } else {
+                    latestContainer.innerHTML = `<p class="error-message">Gagal memuat berita. Data tidak valid.</p>`;
+                }
             } catch (error) {
-                console.error('Error rendering components:', error);
+                latestContainer.innerHTML = `
+                    <p class="error-message">Gagal memuat berita: ${error.message}</p>
+                    <button onclick="fetchAllNews()" class="retry-button">Coba Lagi</button>
+                `;
+            }
+        }
+
+        // Render news cards
+        function renderNewsCards(newsItems, container, sectionTitle) {
+            const sectionHTML = `
+        <div class="section-header">
+            <h2 class="section-title">${sectionTitle}</h2>
+            ${sectionTitle === "Berita Terbaru"
+                    ? `<a onclick="toAllNews('latest')" class="see-more">Lihat semua &gt;</a>`
+                    : sectionTitle === "Kategori" && newsItems[0]?.category?.name
+                        ? `<a onclick="toAllNews({ categoryId: '${newsItems[0].category.id}' })" class="see-more">Lihat semua &gt;</a>`
+                        : `<a onclick="toAllNews('latest')" class="see-more">Lihat semua &gt;</a>`
+                }
+        </div>
+        <div class="news-grid">
+            ${newsItems
+                    .map(
+                        (item) => `
+                <div class="news-card" onclick="toNewsDetail('${item.id}')">
+                    <div class="thumbnail">
+                        <img src="${item.image_url ||
+                            "https://via.placeholder.com/400x225?text=No+Image"
+                            }" 
+                            alt="${item.title}" 
+                            onerror="this.src='https://via.placeholder.com/400x225?text=Gambar+Tidak+Tersedia'"/>
+                    </div>
+                    <div class="news-info">
+                        <h3 class="news-title">${item.title}</h3>
+                        <p class="news-meta">
+                            <span class="news-category">${item.category?.name || "Umum"
+                            }</span> • 
+                            <span class="news-date">${formatDate(
+                                item.createdAt
+                            )}</span>
+                        </p>
+                        ${item.excerpt
+                                ? `<p class="news-excerpt">${item.excerpt}</p>`
+                                : ""
+                            }
+                        <a class="read-more" href="./pages/news_detail.html?id=${item.id
+                            }">Baca Selengkapnya</a>
+                    </div>
+                </div>
+            `
+                    )
+                    .join("")}
+        </div>
+    `;
+            container.innerHTML = sectionHTML;
+        }
+
+        // Inisialisasi halaman
+        document.addEventListener("DOMContentLoaded", async () => {
+            try {
+                // Load components
+                const [navbarHTML, footerHTML] = await Promise.all([
+                    renderNavbar(),
+                    renderFooter(),
+                ]);
+                document.getElementById("navbar").innerHTML = navbarHTML;
+                document.getElementById("footer").innerHTML = footerHTML;
+
+                // Load content
+                await fetchCategories();
+                await fetchAllNews();
+
+                document.getElementById("ads-section").innerHTML =
+                    await renderAdsSection();
+                document.getElementById("ads-section").innerHTML =
+                    await renderAdsSection();
+            } catch (error) {
+                console.error("Error initializing page:", error);
             }
         });
+
+        // Mobile menu toggle
+        document.addEventListener("DOMContentLoaded", function () {
+            const hamburgerBtn = document.getElementById("hamburgerBtn");
+            const navMenu = document.getElementById("navMenu");
+
+            if (hamburgerBtn && navMenu) {
+                hamburgerBtn.addEventListener("click", () => {
+                    navMenu.classList.toggle("show");
+                });
+            }
+        });
+
+        function toNewsDetail(newsId) {
+            window.location.href = `./pages/news_detail.html?id=${newsId}`;
+        }
+
+        async function toAllNews(param) {
+            try {
+                // Jika param adalah object dengan categoryId (dari kategori)
+                if (typeof param === "object" && param.categoryId) {
+                    window.location.href = `./pages/all_news.html?categoryId=${param.categoryId}`;
+                }
+                // Jika param adalah string dan berupa ID kategori (dari category bar)
+                else if (typeof param === "string" && /^\d+$/.test(param)) {
+                    window.location.href = `./pages/all_news.html?categoryId=${param}`;
+                }
+                // Untuk semua kasus lainnya (termasuk "Berita Terbaru")
+                else {
+                    window.location.href = `./pages/all_news.html?section=latest`;
+                }
+            } catch (error) {
+                console.error("Error in toAllNews:", error);
+                // Fallback ke section latest jika ada error
+                window.location.href = `./pages/all_news.html?section=latest`;
+            }
+        }
     </script>
 </body>
 

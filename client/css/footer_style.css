@@ -72,7 +72,7 @@
 }
 
 .footer-logo {
-    max-height: 70px; /* ← PERBESAR LOGO */
+    max-height: 70px;
     width: auto;
 }
 
@@ -82,7 +82,7 @@
 }
 
 .footer-bottom {
-    text-align: left; /* ← Sesuai permintaan */
+    text-align: left;
     margin-top: 2rem;
     font-size: 0.8rem;
     color: #aaa;
