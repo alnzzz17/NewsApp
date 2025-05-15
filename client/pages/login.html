@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Masuk | WinniCode News</title>
+    <style>
+        @import url("https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700&display=swap");
+    </style>
+    <link rel="stylesheet" href="../css/style.css" />
+    <link rel="stylesheet" href="../css/navbar_style.css" />
+    <link rel="stylesheet" href="../css/categorybar_style.css" />
+    <link rel="stylesheet" href="../css/footer_style.css" />
+    <link rel="stylesheet" href="../css/signform_style.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+</head>
+
+<body>
+    <header id="navbar"></header>
+    <nav id="category-bar"></nav>
+    <main>
+        <div class="auth-box">
+            <h2>Masuk WinniCode News</h2>
+
+            <!-- Area notifikasi -->
+            <div id="notificationArea" class="alert" style="display: none;"></div>
+
+            <form id="loginForm" class="login-form">
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" placeholder="Email" required />
+                </div>
+                <div class="form-group">
+                    <label for="password">Kata sandi</label>
+                    <div class="input-group">
+                        <input type="password" id="password" name="password" placeholder="Password" required />
+                        <button type="button" class="toggle-password" id="togglePassword">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="remember" />
+                    <label for="remember">Ingat saya</label>
+                </div>
+                <button type="submit">Masuk</button>
+            </form>
+            <br />
+            <div class="forgot-password">
+                <a href="#">Lupa kata sandi?</a>
+            </div>
+            <div class="auth-link">
+                Belum punya akun? <a href="./register.html">Daftar</a>
+            </div>
+        </div>
+    </main>
+    <footer id="footer"></footer>
+    <script src="../src/utils.js"></script>
+    <script src="../src/components/navbar.js"></script>
+    <script src="../src/components/footer.js"></script>
+    <script>
+        // Fungsi untuk menampilkan notifikasi
+        function showNotification(message, isError = false) {
+            const notificationArea = document.getElementById('notificationArea');
+            notificationArea.style.display = 'block';
+            notificationArea.className = `alert ${isError ? 'alert-danger' : 'alert-success'}`;
+            notificationArea.textContent = message;
+            setTimeout(() => {
+                notificationArea.style.display = 'none';
+            }, 3000);
+        }
+
+        // Fungsi untuk toggle password visibility
+function setupTogglePassword() {
+    const toggleBtn = document.getElementById('togglePassword');
+    if (!toggleBtn) return;
+
+    toggleBtn.addEventListener('click', function() {
+        const passwordInput = document.getElementById('password');
+        const icon = this.querySelector('i');
+
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            icon.classList.replace('fa-eye', 'fa-eye-slash');
+            this.setAttribute('aria-label', 'Hide password');
+        } else {
+            passwordInput.type = 'password';
+            icon.classList.replace('fa-eye-slash', 'fa-eye');
+            this.setAttribute('aria-label', 'Show password');
+        }
+    });
+}
+
+        // Login form handling
+        document.getElementById("loginForm").addEventListener("submit", async function (e) {
+            e.preventDefault();
+            const email = document.getElementById("email").value;
+            const password = document.getElementById("password").value;
+
+            try {
+                const response = await fetch(`${BASE_URL}/api/user/login`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Accept": "application/json"
+                    },
+                    body: JSON.stringify({ email, password }),
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Simpan token dan data user di sessionStorage
+                    sessionStorage.setItem('token', data.token);
+                    sessionStorage.setItem('userData', JSON.stringify(data.user));
+
+                    showNotification('Login berhasil! Mengalihkan...', false);
+
+                    // Redirect ke public_dashboard.html setelah 1 detik
+                    setTimeout(() => {
+                        window.location.href = "/";
+                    }, 1000);
+                } else {
+                    showNotification(data.message || "Login gagal. Email atau password salah.", true);
+                }
+            } catch (err) {
+                showNotification("Terjadi kesalahan jaringan. Coba lagi nanti.", true);
+                console.error("Login error:", err);
+            }
+        });
+
+        // Fungsi untuk mengambil kategori
+        async function fetchCategories() {
+            const categoryBarContainer = document.getElementById("category-bar");
+            let categories = [];
+
+            // Menampilkan skeleton loading
+            categoryBarContainer.innerHTML = `
+                <div class="category-bar skeleton">
+                    <div class="categories">
+                        ${Array(5).fill().map(() =>
+                `<span class="skeleton-item" style="width: 80px; height: 30px;"></span>`
+            ).join("")}
+                    </div>
+                    <div class="right-section">
+                        <div class="search-bar skeleton-item" style="width: 200px; height: 30px;"></div>
+                        <div class="sign-in-button skeleton-item" style="width: 80px; height: 30px;"></div>
+                    </div>
+                </div>
+            `;
+
+            try {
+                const response = await fetch(`${BASE_URL}/api/categories`, {
+                    method: "GET",
+                    headers: {
+                        Accept: "application/json",
+                        "Content-Type": "application/json",
+                    },
+                    mode: "cors",
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                if (data && data.data && Array.isArray(data.data)) {
+                    categories = data.data;
+                    displayCategories(categories);
+                } else {
+                    throw new Error("Data format tidak valid");
+                }
+            } catch (error) {
+                console.error("Error fetching categories:", error);
+                // Menampilkan kategori default jika fetch gagal
+                categories = [
+                    { id: 1, name: "Politik" },
+                    { id: 2, name: "Ekonomi" },
+                    { id: 3, name: "Olahraga" },
+                    { id: 4, name: "Hiburan" },
+                    { id: 5, name: "Teknologi" },
+                ];
+                displayCategories(categories);
+            }
+            return categories;
+        }
+
+        // Fungsi untuk menampilkan kategori
+        function displayCategories(categories) {
+            const categoryBarContainer = document.getElementById("category-bar");
+            if (!categoryBarContainer) {
+                console.error("Category bar container not found!");
+                return;
+            }
+
+            const visibleCategories = categories.length > 7 ? categories.slice(0, 7) : categories;
+            const hiddenCategories = categories.length > 7 ? categories.slice(7) : [];
+
+            const html = `
+                <div class="category-bar" id="categoryBar">
+                    <div class="left-section">
+                        <div class="categories">
+                            ${visibleCategories.map(cat => `
+                                <a onclick="toAllNews('${cat.id}')" class="category-link">
+                                    ${cat.name}
+                                </a>
+                            `).join("")}
+                            ${hiddenCategories.length > 0 ? `
+                                <div class="dropdown">
+                                    <button class="more-btn">More ▼</button>
+                                    <div class="dropdown-content">
+                                        ${hiddenCategories.map(cat => `
+                                            <a onclick="toAllNews('${cat.id}')" class="category-link">
+                                                ${cat.name}
+                                            </a>
+                                        `).join("")}
+                                    </div>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                    <div class="right-section">
+                        <div class="search-bar">
+                            <input type="text" placeholder="Cari berita..." class="search-input" id="searchInput">
+                            <button class="search-button" id="searchButton">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                                            </div>
+                </div>
+            `;
+
+            categoryBarContainer.innerHTML = html;
+
+            // Menambahkan event listener untuk dropdown
+            const moreBtn = document.querySelector(".more-btn");
+            if (moreBtn) {
+                moreBtn.addEventListener("click", function () {
+                    const dropdownContent = this.closest(".dropdown").querySelector(".dropdown-content");
+                    if (dropdownContent) {
+                        dropdownContent.classList.toggle("show");
+                    }
+                });
+            }
+        }
+
+        // Navigation functions
+        async function toAllNews(param) {
+            try {
+                if (typeof param === "object" && param.categoryId) {
+                    window.location.href = `./all_news.html?categoryId=${param.categoryId}`;
+                } else if (typeof param === "string" && /^\d+$/.test(param)) {
+                    window.location.href = `./all_news.html?categoryId=${param}`;
+                } else {
+                    window.location.href = `./all_news.html?section=latest`;
+                }
+            } catch (error) {
+                console.error("Error in toAllNews:", error);
+                window.location.href = `./all_news.html?section=latest`;
+            }
+        }
+
+// Initialize page components
+document.addEventListener("DOMContentLoaded", async () => {
+    try {
+        // Load components
+        const [navbarHTML, footerHTML] = await Promise.all([
+            renderNavbar(),
+            renderFooter(),
+        ]);
+        document.getElementById("navbar").innerHTML = navbarHTML;
+        document.getElementById("footer").innerHTML = footerHTML;
+
+        // Load categories
+        await fetchCategories();
+
+        // Setup toggle password
+        setupTogglePassword();
+
+        // Mobile menu toggle
+        const hamburgerBtn = document.getElementById("hamburgerBtn");
+        const navMenu = document.getElementById("navMenu");
+        if (hamburgerBtn && navMenu) {
+            hamburgerBtn.addEventListener("click", () => {
+                navMenu.classList.toggle("show");
+            });
+        }
+
+    } catch (error) {
+        console.error("Error initializing page:", error);
+    }
+});
+
+        // Fungsi logout
+        function handleLogout() {
+            const confirmLogout = confirm("Apakah Anda yakin ingin logout?");
+            if (confirmLogout) {
+                sessionStorage.clear();
+                window.location.href = "./pages/login.html";
+            }
+        }
+    </script>
+</body>
+
+</html>

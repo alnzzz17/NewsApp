@@ -112,6 +112,7 @@ const loginHandler = async (req, res) => {
                 email: user.email,
                 userName: user.userName,
                 fullName: user.fullName,
+                profilePict: user.profilePict,
                 role: user.role ? {
                     id: user.role.id,
                     name: user.role.name
