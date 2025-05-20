@@ -293,10 +293,86 @@ const updateUserByAdmin = async (req, res) => {
     }
 };
 
+// GET ALL USERS - ADMIN ONLY
+const getAllUsers = async (req, res) => {
+    try {
+        const authorization = req.headers.authorization;
+        if (!authorization || !authorization.startsWith("Bearer ")) {
+            return res.status(403).json({ status: "error", message: "You need to login" });
+        }
+
+        const token = authorization.substring(7);
+        const decoded = jwt.verify(token, process.env.TOKEN_SECRET_KEY);
+        
+        // Check if user is admin (roleId === 1)
+        if (decoded.roleId !== 1) {
+            return res.status(403).json({ 
+                status: "error", 
+                message: "Only admin can access this resource" 
+            });
+        }
+
+        // Get all users with their role information
+        const users = await User.findAll({
+            attributes: ["id", "userName", "email", "fullName", "profilePict", "createdAt", "updatedAt"],
+            include: {
+                model: Role,
+                attributes: ["id", "name"]
+            },
+            order: [['createdAt', 'DESC']] // Optional: sort by creation date
+        });
+
+        res.status(200).json({
+            status: "success",
+            message: "Users retrieved successfully",
+            data: users
+        });
+    } catch (error) {
+        res.status(500).json({ 
+            status: "error", 
+            message: error.message 
+        });
+    }
+};
+
+// GET CURRENT USER PROFILE (by token)
+const getCurrentUser = async (req, res) => {
+    try {
+        const authorization = req.headers.authorization;
+        if (!authorization || !authorization.startsWith("Bearer ")) {
+            return res.status(403).json({ status: "error", message: "You need to login" });
+        }
+
+        const token = authorization.substring(7);
+        const decoded = jwt.verify(token, process.env.TOKEN_SECRET_KEY);
+        
+        const user = await User.findByPk(decoded.id, {
+            include: {
+                model: Role,
+                attributes: ['id', 'name']
+            },
+            attributes: { exclude: ['password'] }
+        });
+
+        if (!user) {
+            return res.status(404).json({ status: "error", message: "User not found" });
+        }
+
+        res.status(200).json({
+            status: "success",
+            data: user
+        });
+    } catch (error) {
+        res.status(500).json({ status: "error", message: error.message });
+    }
+};
+
 module.exports = {
     postUser,
     deleteUser,
     loginHandler,
     editUser,
-    updateUserByAdmin
+    updateUserByAdmin,
+    getAllUsers,
+    getCurrentUser
 };

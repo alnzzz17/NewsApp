@@ -7,7 +7,9 @@ const {
     loginHandler,
     deleteUser,
     editUser,
-    updateUserByAdmin
+    updateUserByAdmin,
+    getAllUsers,
+    getCurrentUser
 } = require("../controllers/userController");
 
 // REGISTER USER
@@ -24,5 +26,11 @@ router.delete("/delete/:id", deleteUser);
 
 // UPDATE USER (by admin, including role + profile picture upload)
 router.put("/admin/update/:id", upload.single("profilePict"), updateUserByAdmin);
+
+// GET ALL USER (by admin)
+router.get("/admin/all-user", getAllUsers);
+
+// GET LOGGD IN USER
+router.get("/me", getCurrentUser);
 
 module.exports = router;

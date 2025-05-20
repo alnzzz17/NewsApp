@@ -1,0 +1,215 @@
+.content-wrapper {
+    display: flex;
+    flex: 1;
+}
+
+/* Sidebar Styles */
+.sidebar {
+    width: 250px;
+    background: #111;
+    color: white;
+    padding: 1.5rem 1rem;
+    box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+}
+
+.sidebar .profile {
+    text-align: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid #333;
+}
+
+.avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    margin: 0 auto 1rem;
+    overflow: hidden;
+}
+
+.avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.name-role {
+    margin-top: 0.5rem;
+}
+
+.name-role strong {
+    display: block;
+    font-size: 1.1rem;
+    margin-bottom: 0.25rem;
+}
+
+.name-role span {
+    font-size: 0.9rem;
+    color: #aaa;
+}
+
+.side-menu {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.side-menu a {
+    color: #ddd;
+    display: block;
+    padding: 0.75rem 1rem;
+    text-decoration: none;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    font-size: 0.95rem;
+}
+
+.side-menu a:hover {
+    background: #333;
+    color: white;
+}
+
+.side-menu a.active {
+    background: #444;
+    color: white;
+    font-weight: 500;
+}
+
+/* Main Content Styles */
+.main-content {
+    flex: 1;
+    padding: 2rem;
+    background: white;
+    box-shadow: 0 0 10px rgba(0,0,0,0.05);
+}
+
+h1 {
+    margin-top: 0;
+    margin-bottom: 1.5rem;
+    color: #222;
+    font-size: 1.8rem;
+}
+
+/* Table Styles */
+.table-container {
+    overflow-x: auto;
+    margin-top: 1rem;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+}
+
+th, td {
+    padding: 0.75rem 1rem;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+}
+
+th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+    color: #444;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    letter-spacing: 0.5px;
+}
+
+tr:hover {
+    background-color: #f9f9f9;
+}
+
+/* Status Badges */
+.status-dipublikasikan {
+    color: #28a745;
+    font-weight: 500;
+}
+
+.status-draft {
+    color: #6c757d;
+}
+
+.status-ditolak {
+    color: #dc3545;
+}
+
+/* Button Styles */
+button {
+    padding: 0.5rem 0.75rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.edit-btn {
+    background-color: #17a2b8;
+    color: white;
+}
+
+.edit-btn:hover {
+    background-color: #138496;
+}
+
+.delete-btn {
+    background-color: #dc3545;
+    color: white;
+}
+
+.delete-btn:hover {
+    background-color: #c82333;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .content-wrapper {
+        flex-direction: column;
+    }
+    
+    .sidebar {
+        width: 100%;
+        min-height: auto;
+        padding: 1rem;
+    }
+    
+    .sidebar .profile {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        text-align: left;
+        margin-bottom: 1rem;
+    }
+    
+    .avatar {
+        width: 50px;
+        height: 50px;
+        margin: 0;
+    }
+    
+    .side-menu {
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+    
+    .side-menu a {
+        padding: 0.5rem;
+    }
+    
+    .main-content {
+        padding: 1.5rem;
+    }
+    
+    th, td {
+        padding: 0.5rem;
+        font-size: 0.9rem;
+    }
+}

@@ -28,10 +28,10 @@
     </main>
     <section id="ads-bottom"></section>
     <footer id="footer"></footer>
-    <script src="./src/utils.js"></script>
-    <script src="./src/components/navbar.js"></script>
-    <script src="./src/components/footer.js"></script>
-    <script src="./src/components/adsSection.js"></script>
+    <script src="../src/utils.js"></script>
+    <script src="../src/components/navbar.js"></script>
+    <script src="../src/components/footer.js"></script>
+    <script src="../src/components/adsSection.js"></script>
     <script>
         // Base functions
         function formatDate(dateStr) {
@@ -151,6 +151,16 @@
         }
 
         // Fungsi untuk menampilkan kategori dengan tombol profile
+        function getDashboardLink(roleId) {
+            if (roleId === 1 || roleId === 2) {
+                return "./pages/auth_dashboard.html";
+            } else if (roleId === 3) {
+                return "./pages/edit_account.html";
+            } else {
+                return "#";
+            }
+        }
+
         function displayCategories(categories) {
             const categoryBarContainer = document.getElementById("category-bar");
             if (!categoryBarContainer) {
@@ -161,10 +171,10 @@
             const visibleCategories = categories.length > 7 ? categories.slice(0, 7) : categories;
             const hiddenCategories = categories.length > 7 ? categories.slice(7) : [];
 
-            // Cek apakah user sudah login
             const token = sessionStorage.getItem("token");
             const isLoggedIn = !!token;
             const userData = token ? decodeToken(token) : null;
+            const dashboardLink = userData ? getDashboardLink(userData.roleId) : "#";
 
             const html = `
         <div class="category-bar" id="categoryBar">
@@ -173,9 +183,9 @@
                     ${visibleCategories
                     .map(
                         (cat) => `
-                            <a onclick="toAllNews('${cat.id}')" class="category-link">
-                                ${cat.name}
-                            </a>`
+                                <a onclick="toAllNews('${cat.id}')" class="category-link">
+                                    ${cat.name}
+                                </a>`
                     )
                     .join("")}
                     ${hiddenCategories.length > 0
@@ -193,7 +203,8 @@
                         .join("")}
                                 </div>
                             </div>`
-                    : ""}
+                    : ""
+                }
                 </div>
             </div>
             <div class="right-section">
@@ -207,24 +218,25 @@
                     ? `
                         <div class="profile-dropdown">
                             <button class="profile-button" id="profileButton">
-                <i class='fas fa-user-circle'></i>
-              </button>
+                                <i class='fas fa-user-circle'></i>
+                            </button>
                             <div class="profile-dropdown-content">
                                 <div class="profile-info">
                                     ${userData?.fullName || 'User'}
                                 </div>
-                                <a href="./dashboard.html">Dashboard</a>
+                                <a href="${dashboardLink}">Dashboard</a>
                                 <a href="#" onclick="handleLogout()">Logout</a>
                             </div>
                         </div>`
-                    : `<button class="sign-in-button" id="signInButton" onclick="window.location.href='./pages/login.html'">Sign In</button>`}
+                    : `<button class="sign-in-button" id="signInButton" onclick="window.location.href='./pages/login.html'">Sign In</button>`
+                }
             </div>
         </div>
     `;
 
             categoryBarContainer.innerHTML = html;
 
-            // Menambahkan event listener untuk dropdown kategori
+            // Dropdown kategori "More"
             const moreBtn = document.querySelector(".more-btn");
             if (moreBtn) {
                 moreBtn.addEventListener("click", function () {
@@ -235,7 +247,7 @@
                 });
             }
 
-            // Menambahkan event listener untuk dropdown profile
+            // Dropdown profil user
             const profileButton = document.getElementById("profileButton");
             if (profileButton) {
                 profileButton.addEventListener("click", function () {

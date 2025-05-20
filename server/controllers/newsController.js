@@ -265,7 +265,7 @@ const getAllNews = async (req, res) => {
     try {
         const news = await News.findAll({
             include: [
-                { model: User, attributes: ["id", "userName"] },
+                { model: User, attributes: ["id", "userName", "fullName"] },
                 { model: Category, attributes: ["id", "name"] },
             ],
             order: [["createdAt", "DESC"]],
@@ -302,6 +302,15 @@ const getNewsById = async (req, res) => {
             });
         }
 
+        // Jika status bukan DIPUBLIKASIKAN dan user bukan pemilik/admin
+        // if (news.status !== "DIPUBLIKASIKAN" && 
+        //     (!userId || (userId !== news.userId && roleId !== 1))) {
+        //     return res.status(403).json({ 
+        //         status: "error", 
+        //         message: "Anda tidak memiliki akses ke berita ini" 
+        //     });
+        // }
+
         res.status(200).json({
             status: "success",
             data: news,
@@ -320,7 +329,7 @@ const getNewsByAuthor = async (req, res) => {
         const news = await News.findAll({
             where: { authorId: req.params.authorId },
             include: [
-                { model: User, attributes: ["id", "userName"] },
+                { model: User, attributes: ["id", "userName", "fullName"] },
                 { model: Category, attributes: ["id", "name"] },
             ],
             order: [["createdAt", "DESC"]],
