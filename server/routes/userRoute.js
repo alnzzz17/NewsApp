@@ -10,7 +10,8 @@ const {
     editUser,
     updateUserByAdmin,
     getAllUsers,
-    getCurrentUser
+    getCurrentUser,
+    getAllJournalists
 } = require("../controllers/userController");
 
 // Public routes (no authentication needed)
@@ -36,5 +37,8 @@ router.put("/admin/update/:id", verifyToken, upload.single("profilePict"), updat
 
 // GET ALL USER (by admin)
 router.get("/admin/all-user", verifyToken, getAllUsers);
+
+// GET ALL JOURNALIST (by admin)
+router.get("/admin/get/journalists", verifyToken, getAllJournalists);
 
 module.exports = router;

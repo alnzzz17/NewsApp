@@ -328,6 +328,23 @@ const getCurrentUser = async (req, res) => {
     }
 };
 
+// GET ALL JOURNALISTS
+const getAllJournalists = async (req, res) => {
+    try {
+        const journalists = await User.findAll({
+            where: { roleId: 2 },
+            attributes: ['id', 'userName', 'fullName']
+        });
+
+        res.status(200).json({
+            status: "success",
+            data: journalists
+        });
+    } catch (error) {
+        res.status(500).json({ status: "error", message: error.message });
+    }
+};
+
 module.exports = {
     postUser,
     deleteUser,
@@ -335,5 +352,6 @@ module.exports = {
     editUser,
     updateUserByAdmin,
     getAllUsers,
-    getCurrentUser
+    getCurrentUser,
+    getAllJournalists
 };
