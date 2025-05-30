@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard Berita</title>
+    <link rel="stylesheet" href="../css/style.css" />
+    <link rel="stylesheet" href="../css/navbar_style.css" />
+    <link rel="stylesheet" href="../css/footer_style.css" />
+    <link rel="stylesheet" href="../css/authnewslist_style.css" />
+    <link rel="stylesheet" href="../css/authsidebar_style.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+</head>
+
+<body>
+    <!-- Navbar di paling atas -->
+    <header id="navbar"></header>
+
+    <!-- Konten utama dengan sidebar dan main content -->
+    <div class="content-wrapper">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="profile">
+                <div class="avatar">
+                    <img id="profileAvatar" src="" alt="Profile Picture">
+                </div>
+                <div class="name-role">
+                    <strong id="userName">Nama</strong>
+                    <span id="userRole">Role</span>
+                </div>
+            </div>
+            <div class="side-menu">
+                <!-- Di script -->
+            </div>
+        </aside>
+
+        <!-- Konten utama -->
+        <main class="main-content">
+            <h1>Semua Berita</h1>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>No.</th>
+                            <th>Judul</th>
+                            <th>Penulis</th>
+                            <th>Kategori</th>
+                            <th>Tanggal</th>
+                            <th>Status</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="newsTableBody">
+                        <!-- Data akan dimuat oleh JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+
+    <!-- Footer di paling bawah -->
+    <footer id="footer"></footer>
+    <script src="../src/utils.js"></script>
+    <script src="../src/components/navbar.js"></script>
+    <script src="../src/components/footer.js"></script>
+    <script>
+        // Fungsi untuk decode token JWT (diambil dari referensi)
+        function decodeToken(token) {
+            try {
+                const base64Url = token.split('.')[1];
+                const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                const jsonPayload = decodeURIComponent(
+                    atob(base64)
+                        .split('')
+                        .map(function (c) {
+                            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+                        })
+                        .join('')
+                );
+                return JSON.parse(jsonPayload);
+            } catch (error) {
+                console.error("Invalid token", error);
+                return null;
+            }
+        }
+
+        // Fungsi untuk memformat tanggal (diambil dari referensi)
+        function formatDate(dateStr) {
+            const options = { year: "numeric", month: "short", day: "numeric" };
+            return new Date(dateStr).toLocaleDateString("id-ID", options);
+        }
+
+        // Fungsi untuk generate menu sidebar berdasarkan role
+        function generateSideMenu(roleId) {
+            let menuItems = '';
+
+            // Common items for both roles
+            menuItems += '<a href="auth_dashboard.html">Dashboard</a>';
+            menuItems += '<a href="news_form.html">Tulis Berita</a>';
+            menuItems += '<a href="auth_dashboard.html">Daftar Berita</a>';
+
+            // Admin-specific items
+            if (roleId === 1) {
+                menuItems += '<a href="daftar_user.html">Daftar User</a>';
+                menuItems += '<a href="tambah_user.html">Tambah User</a>';
+            }
+
+            // Common items for both roles
+            menuItems += '<a href="edit_profil.html">Edit Profil</a>';
+            menuItems += '<a href="#" onclick="handleLogout()">Logout</a>';
+
+            return menuItems;
+        }
+
+        document.addEventListener("DOMContentLoaded", async () => {
+            // Load navbar dan footer
+            try {
+                const [navbarHTML, footerHTML] = await Promise.all([
+                    renderNavbar(),
+                    renderFooter(),
+                ]);
+                document.getElementById("navbar").innerHTML = navbarHTML;
+                document.getElementById("footer").innerHTML = footerHTML;
+            } catch (error) {
+                console.error("Error loading components:", error);
+            }
+
+            // Cek autentikasi
+            const token = sessionStorage.getItem("token");
+            if (!token) {
+                window.location.href = "../pages/login.html";
+                return;
+            }
+
+            try {
+                // Ambil data user dari endpoint /api/user/me
+                const userResponse = await fetch(`${BASE_URL}/api/user/me`, {
+                    headers: {
+                        "Authorization": `Bearer ${token}`,
+                        "Content-Type": "application/json"
+                    }
+                });
+
+                if (!userResponse.ok) {
+                    throw new Error(`HTTP error! status: ${userResponse.status}`);
+                }
+
+                const userResult = await userResponse.json();
+
+                if (userResult.status !== "success" || !userResult.data) {
+                    throw new Error("Gagal memuat data user");
+                }
+
+                const user = userResult.data;
+
+                // Tampilkan info user di sidebar
+                document.getElementById("userName").textContent = user.fullName || user.userName;
+                document.getElementById("userRole").textContent = user.role?.name || (user.roleId === 1 ? "Admin" : "Jurnalis");
+
+                // Tampilkan gambar profil
+                const profileAvatar = document.getElementById("profileAvatar");
+                if (user.profilePict) {
+                    profileAvatar.src = user.profilePict;
+                    profileAvatar.alt = "Profile Picture";
+                    profileAvatar.style.display = "block";
+
+                    // Fallback jika gambar gagal dimuat
+                    profileAvatar.onerror = function () {
+                        this.style.display = "none";
+                        const avatarContainer = document.querySelector(".avatar");
+                        avatarContainer.innerHTML = user.fullName
+                            ? user.fullName.charAt(0).toUpperCase()
+                            : '<i class="fas fa-user"></i>';
+                        avatarContainer.style.display = "flex";
+                        avatarContainer.style.alignItems = "center";
+                        avatarContainer.style.justifyContent = "center";
+                        avatarContainer.style.fontSize = "2rem";
+                        avatarContainer.style.backgroundColor = "#444";
+                        avatarContainer.style.color = "#fff";
+                    };
+                } else {
+                    // Jika tidak ada gambar profil, tampilkan inisial
+                    const avatarContainer = document.querySelector(".avatar");
+                    avatarContainer.innerHTML = user.fullName
+                        ? user.fullName.charAt(0).toUpperCase()
+                        : '<i class="fas fa-user"></i>';
+                    avatarContainer.style.display = "flex";
+                    avatarContainer.style.alignItems = "center";
+                    avatarContainer.style.justifyContent = "center";
+                    avatarContainer.style.fontSize = "2rem";
+                    avatarContainer.style.backgroundColor = "#444";
+                    avatarContainer.style.color = "#fff";
+                }
+
+                const sideMenu = document.querySelector(".side-menu");
+                const roleId = user.roleId || (user.role && user.role.id);
+                sideMenu.innerHTML = generateSideMenu(roleId);
+
+                // Load data berita berdasarkan role
+                let url = `${BASE_URL}/api/news/all`;
+                if (user.roleId === 2 || (user.role && user.role.id === 2)) {
+                    url = `${BASE_URL}/api/news/author/${user.id}`;
+                }
+
+                const newsResponse = await fetch(url, {
+                    method: "GET",
+                    headers: {
+                        "Authorization": `Bearer ${token}`,
+                        "Content-Type": "application/json",
+                    },
+                });
+
+                if (!newsResponse.ok) throw new Error(`HTTP error! status: ${newsResponse.status}`);
+
+                const newsResult = await newsResponse.json();
+                if (newsResult.status === "success" && Array.isArray(newsResult.data)) {
+                    const tbody = document.getElementById("newsTableBody");
+                    tbody.innerHTML = newsResult.data.map((item, index) => {
+                        const authorName = item.author?.fullName || item.author?.userName || item.user?.fullName || '-';
+                        const categoryName = item.category?.name || '-';
+
+                        return `
+                        <tr>
+                            <td>${index + 1}</td>
+                            <td>${item.title || '-'}</td>
+                            <td>${authorName}</td>
+                            <td>${categoryName}</td>
+                            <td>${formatDate(item.createdAt)}</td>
+                            <td class="status-${item.status.toLowerCase()}">${item.status}</td>
+                            <td class="actions">
+                                <button class="edit-btn" onclick="editNews('${item.id}')">
+                                    Edit
+                                </button>
+                                <button class="delete-btn" onclick="deleteNews('${item.id}')">
+                                    Hapus
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                    }).join('');
+                } else {
+                    throw new Error("Data format tidak valid");
+                }
+            } catch (error) {
+                console.error("Error:", error);
+                // Fallback ke data dari token jika endpoint /me gagal
+                const decodedUser = decodeToken(token);
+                if (decodedUser) {
+                    document.getElementById("userName").textContent = decodedUser.fullName || decodedUser.userName;
+                    document.getElementById("userRole").textContent = decodedUser.roleId === 1 ? "Admin" : "Jurnalis";
+                }
+
+                document.getElementById("newsTableBody").innerHTML = `
+                <tr>
+                    <td colspan="7" class="error-message">
+                        Gagal memuat data. ${error.message}
+                        <button onclick="location.reload()" class="retry-button">Coba Lagi</button>
+                    </td>
+                </tr>
+            `;
+            }
+        });
+        function editNews(id) {
+            window.location.href = `news_form.html?id=${id}`;
+        }
+
+        async function deleteNews(id) {
+            if (!confirm("Yakin ingin menghapus berita ini?")) return;
+
+            try {
+                const token = sessionStorage.getItem("token");
+                const response = await fetch(`${BASE_URL}/api/news/${id}`, {
+                    method: "DELETE",
+                    headers: {
+                        "Authorization": `Bearer ${token}`,
+                        "Content-Type": "application/json"
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+
+                if (result.status === "success") {
+                    alert("Berita berhasil dihapus");
+                    location.reload();
+                } else {
+                    throw new Error(result.message || "Gagal menghapus berita");
+                }
+            } catch (error) {
+                console.error("Error deleting news:", error);
+                alert(`Gagal menghapus berita: ${error.message}`);
+            }
+        }
+
+        function handleLogout() {
+            if (confirm("Apakah Anda yakin ingin logout?")) {
+                sessionStorage.removeItem("token");
+                sessionStorage.removeItem("userData");
+                window.location.href = "../pages/login.html";
+            }
+        }
+    </script>
+</body>
+
+</html>
