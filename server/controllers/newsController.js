@@ -1,31 +1,15 @@
 require("dotenv").config();
 
 const fs = require("fs");
-const jwt = require("jsonwebtoken");
 const { Op } = require("sequelize");
 const cloudinary = require("../utils/cloudinaryConfig");
 const News = require("../models/newsModel");
 const User = require("../models/userModel");
 const Category = require("../models/categoryModel");
 
-// JWT VERIFICATION
-const verifyToken = (req) => {
-    const authorization = req.headers.authorization;
-    if (!authorization || !authorization.startsWith("Bearer ")) {
-        throw new Error("You need to login");
-    }
-    const token = authorization.substring(7);
-    return jwt.verify(token, process.env.TOKEN_SECRET_KEY);
-};
-
 // CREATE NEWS - ADMIN & JOURNALIST ONLY
 const createNews = async (req, res) => {
     try {
-        const decoded = verifyToken(req);
-        if (![1, 2].includes(decoded.roleId)) {
-            return res.status(403).json({ status: "error", message: "Unauthorized" });
-        }
-
         const { categoryId, title, content, authorId: inputAuthorId } = req.body;
         const file = req.file;
 
@@ -38,6 +22,7 @@ const createNews = async (req, res) => {
                 use_filename: true,
                 unique_filename: false,
             });
+
             imageUrl = uploadResult.secure_url;
 
             // Menghapus file temp setelah upload
@@ -48,7 +33,8 @@ const createNews = async (req, res) => {
 
         // Menentukan authorId
         let authorId;
-        if (decoded.roleId === 1) {
+
+        if (req.user.roleId === 1) {
             // Admin bisa input authorId secara manual
             if (!inputAuthorId) {
                 return res.status(400).json({
@@ -59,7 +45,7 @@ const createNews = async (req, res) => {
             authorId = inputAuthorId;
         } else {
             // Journalist hanya bisa pakai ID mereka sendiri
-            authorId = decoded.id;
+            authorId = req.user.id;
         }
 
         const news = await News.create({
@@ -86,7 +72,6 @@ const createNews = async (req, res) => {
 // UPDATE NEWS - JOURNALIST ONLY
 const updateNews = async (req, res) => {
     try {
-        const decoded = verifyToken(req);
         const news = await News.findByPk(req.params.id);
 
         if (!news) {
@@ -96,7 +81,7 @@ const updateNews = async (req, res) => {
             });
         }
 
-        if (decoded.roleId !== 2 || decoded.id !== news.authorId) {
+        if (req.user.roleId !== 2 || req.user.id !== news.authorId) {
             return res.status(403).json({
                 status: "error",
                 message: "Unauthorized",
@@ -119,6 +104,7 @@ const updateNews = async (req, res) => {
                 use_filename: true,
                 unique_filename: false,
             });
+
             imageUrl = uploadResult.secure_url;
 
             // Menghapus file temp setelah upload
@@ -156,7 +142,6 @@ const updateNews = async (req, res) => {
 // DELETE NEWS - ADMIN & JOURNALIST (OWNER) ONLY
 const deleteNews = async (req, res) => {
     try {
-        const decoded = verifyToken(req);
         const news = await News.findByPk(req.params.id);
 
         if (!news) {
@@ -166,7 +151,7 @@ const deleteNews = async (req, res) => {
             });
         }
 
-        if (decoded.roleId !== 1 && decoded.id !== news.authorId) {
+        if (req.user.roleId !== 1 && req.user.id !== news.authorId) {
             return res.status(403).json({
                 status: "error",
                 message: "Unauthorized",
@@ -196,15 +181,8 @@ const deleteNews = async (req, res) => {
 // UPDATE NEWS - ADMIN
 const updateNewsByAdmin = async (req, res) => {
     try {
-        const decoded = verifyToken(req);
-        if (decoded.roleId !== 1) {
-            return res.status(403).json({
-                status: "error",
-                message: "Only admin can perform this action",
-            });
-        }
-
         const news = await News.findByPk(req.params.id);
+
         if (!news) {
             return res.status(404).json({
                 status: "error",
@@ -228,6 +206,7 @@ const updateNewsByAdmin = async (req, res) => {
                 use_filename: true,
                 unique_filename: false,
             });
+
             imageUrl = uploadResult.secure_url;
 
             // Hapus file temp setelah upload
@@ -301,15 +280,6 @@ const getNewsById = async (req, res) => {
                 message: "News not found",
             });
         }
-
-        // Jika status bukan DIPUBLIKASIKAN dan user bukan pemilik/admin
-        // if (news.status !== "DIPUBLIKASIKAN" && 
-        //     (!userId || (userId !== news.userId && roleId !== 1))) {
-        //     return res.status(403).json({ 
-        //         status: "error", 
-        //         message: "Anda tidak memiliki akses ke berita ini" 
-        //     });
-        // }
 
         res.status(200).json({
             status: "success",

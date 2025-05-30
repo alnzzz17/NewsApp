@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const upload = require("../middlewares/fileUpload");
+const verifyToken = require("../middlewares/verifyToken");
 
 const {
     createNews,
@@ -14,7 +15,7 @@ const {
 } = require("../controllers/newsController");
 
 // CREATE NEWS (admin & journalist only)
-router.post("/new", upload.single("imageUrl"), createNews);
+router.post("/new", verifyToken, upload.single("imageUrl"), createNews);
 
 // GET ALL NEWS
 router.get("/all", getAllNews);
@@ -29,12 +30,12 @@ router.get("/author/:authorId", getNewsByAuthor);
 router.get("/category/:categoryId", getNewsByCategory);
 
 // UPDATE NEWS (journalist only, only their own news)
-router.put("/edit/:id", upload.single("imageUrl"), updateNews);
+router.put("/edit/:id", verifyToken, upload.single("imageUrl"), updateNews);
 
 // UPDATE NEWS BY ADMIN
-router.put("/admin/update/:id", upload.single("imageUrl"), updateNewsByAdmin);
+router.put("/admin/update/:id", verifyToken, upload.single("imageUrl"), updateNewsByAdmin);
 
 // DELETE NEWS (admin or journalist-owner only)
-router.delete("/delete/:id", deleteNews);
+router.delete("/delete/:id", verifyToken, deleteNews);
 
 module.exports = router;
