@@ -24,7 +24,8 @@
         <section id="latest" class="section">
             <!-- Berita dimuat disini -->
         </section>
-        <section id="section-c" class="section"></section>
+        <section id="section-a" class="section"></section>
+        <section id="section-b" class="section"></section>
     </main>
     <section id="ads-bottom"></section>
     <footer id="footer"></footer>
@@ -270,66 +271,85 @@
             }
         }
 
-        async function fetchAllNews() {
-            const latestContainer = document.getElementById("latest");
-            try {
-                const result = await fetchData(`${BASE_URL}/api/news/all`);
-                if (result.status === "success" && Array.isArray(result.data)) {
-                    const publishedNews = result.data
-                        .filter((item) => item.status === "DIPUBLIKASIKAN")
-                        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-                        .slice(0, 4);
-                    renderNewsCards(publishedNews, latestContainer, "Berita Terbaru");
-                } else {
-                    latestContainer.innerHTML = `<p class="error-message">Gagal memuat berita. Data tidak valid.</p>`;
-                }
-            } catch (error) {
-                latestContainer.innerHTML = `
-          <p class="error-message">Gagal memuat berita: ${error.message}</p>
-          <button onclick="fetchAllNews()" class="retry-button">Coba Lagi</button>
-        `;
-            }
-        }
+async function fetchAllNews() {
+    const latestContainer = document.getElementById("latest");
+    const sectionAContainer = document.getElementById("section-a");
+    const sectionBContainer = document.getElementById("section-b");
 
-        // Render news cards
-        function renderNewsCards(newsItems, container, sectionTitle) {
-            const sectionHTML = `
-        <div class="section-header">
-          <h2 class="section-title">${sectionTitle}</h2>
-          ${sectionTitle === "Berita Terbaru"
-                    ? `<a onclick="toAllNews('latest')" class="see-more">Lihat semua &gt;</a>`
-                    : sectionTitle === "Kategori" && newsItems[0]?.category?.name
-                        ? `<a onclick="toAllNews({ categoryId: '${newsItems[0].category.id}' })" class="see-more">Lihat semua &gt;</a>`
-                        : `<a onclick="toAllNews('latest')" class="see-more">Lihat semua &gt;</a>`
+    try {
+        // Fetch semua berita terbaru
+        const result = await fetchData(`${BASE_URL}/api/news/all`);
+        if (result.status === "success" && Array.isArray(result.data)) {
+            const publishedNews = result.data
+                .filter((item) => item.status === "DIPUBLIKASIKAN")
+                .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+            // Render berita terbaru
+            renderNewsCards(publishedNews.slice(0, 4), latestContainer, "Berita Terbaru");
+
+            // Ambil kategori random
+            const categories = await fetchCategories();
+            if (categories.length > 0) {
+                // Pilih 2 kategori random
+                const shuffled = [...categories].sort(() => 0.5 - Math.random());
+                const selectedCategories = shuffled.slice(0, 2);
+
+                // Render berita untuk setiap kategori random
+                for (let i = 0; i < selectedCategories.length; i++) {
+                    const category = selectedCategories[i];
+                    const categoryNews = publishedNews.filter(
+                        (item) => item.category?.id === category.id
+                    ).slice(0, 4); // Ambil 4 berita terbaru dari kategori
+                    
+                    const container = i === 0 ? sectionAContainer : sectionBContainer;
+                    renderNewsCards(categoryNews, container, category.name);
                 }
+            }
+        } else {
+            latestContainer.innerHTML = `<p class="error-message">Gagal memuat berita. Data tidak valid.</p>`;
+        }
+    } catch (error) {
+        latestContainer.innerHTML = `
+            <p class="error-message">Gagal memuat berita: ${error.message}</p>
+            <button onclick="fetchAllNews()" class="retry-button">Coba Lagi</button>
+        `;
+    }
+}
+        // Render news cards
+function renderNewsCards(newsItems, container, sectionTitle) {
+    if (!container) return;
+
+    const sectionHTML = `
+        <div class="section-header">
+            <h2 class="section-title">${sectionTitle}</h2>
+            ${sectionTitle === "Berita Terbaru"
+                ? `<a onclick="toAllNews('latest')" class="see-more">Lihat semua &gt;</a>`
+                : `<a onclick="toAllNews({ categoryId: '${newsItems[0]?.category?.id || ''}' })" class="see-more">Lihat semua &gt;</a>`
+            }
         </div>
         <div class="news-grid">
-          ${newsItems
-                    .map(
-                        (item) => `
-              <div class="news-card" onclick="toNewsDetail('${item.id}')">
-                <div class="thumbnail">
-                  <img src="${item.image_url || "https://via.placeholder.com/400x225?text=No+Image"}" 
-                       alt="${item.title}"
-                       onerror="this.src='https://via.placeholder.com/400x225?text=Gambar+Tidak+Tersedia'"/>
+            ${newsItems.map((item) => `
+                <div class="news-card" onclick="toNewsDetail('${item.id}')">
+                    <div class="thumbnail">
+                        <img src="${item.image_url || "https://via.placeholder.com/400x225?text=No+Image"}" 
+                             alt="${item.title}"
+                             onerror="this.src='https://via.placeholder.com/400x225?text=Gambar+Tidak+Tersedia'"/>
+                    </div>
+                    <div class="news-info">
+                        <h3 class="news-title">${item.title}</h3>
+                        <p class="news-meta">
+                            <span class="news-category">${item.category?.name || "Umum"}</span> •
+                            <span class="news-date">${formatDate(item.createdAt)}</span>
+                        </p>
+                        ${item.excerpt ? `<p class="news-excerpt">${item.excerpt}</p>` : ""}
+                        <a class="read-more" href="./pages/news_detail.html?id=${item.id}">Baca Selengkapnya</a>
+                    </div>
                 </div>
-                <div class="news-info">
-                  <h3 class="news-title">${item.title}</h3>
-                  <p class="news-meta">
-                    <span class="news-category">${item.category?.name || "Umum"}</span> •
-                    <span class="news-date">${formatDate(item.createdAt)}</span>
-                  </p>
-                  ${item.excerpt ? `<p class="news-excerpt">${item.excerpt}</p>` : ""}
-                  <a class="read-more" href="./pages/news_detail.html?id=${item.id}">Baca Selengkapnya</a>
-                </div>
-              </div>`
-                    )
-                    .join("")}
+            `).join("")}
         </div>
-      `;
-            container.innerHTML = sectionHTML;
-        }
-
+    `;
+    container.innerHTML = sectionHTML;
+}
         // Inisialisasi halaman
         document.addEventListener("DOMContentLoaded", async () => {
             try {
