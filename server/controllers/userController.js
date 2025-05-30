@@ -292,6 +292,7 @@ const getAllUsers = async (req, res) => {
         res.status(200).json({
             status: "success",
             message: "Users retrieved successfully",
+            total: users.length,
             data: users
         });
 
@@ -338,6 +339,7 @@ const getAllJournalists = async (req, res) => {
 
         res.status(200).json({
             status: "success",
+            total: journalists.length,
             data: journalists
         });
     } catch (error) {
