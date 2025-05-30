@@ -1,0 +1,117 @@
+.content-wrapper {
+  display: flex;
+  min-height: 100vh;
+}
+
+
+.main-content {
+  flex: 1;
+  padding: 2rem;
+  overflow: auto;
+}
+
+.sidebar {
+    width: 250px;
+    background: #111;
+    color: white;
+    padding: 1.5rem 1rem;
+    box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+}
+
+.sidebar .profile {
+    text-align: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid #333;
+}
+
+.avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    margin: 0 auto 1rem;
+    overflow: hidden;
+}
+
+.avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.name-role {
+    margin-top: 0.5rem;
+}
+
+.name-role strong {
+    display: block;
+    font-size: 1.1rem;
+    margin-bottom: 0.25rem;
+}
+
+.name-role span {
+    font-size: 0.9rem;
+    color: #aaa;
+}
+
+.side-menu {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.side-menu a {
+    color: #ddd;
+    display: block;
+    padding: 0.75rem 1rem;
+    text-decoration: none;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    font-size: 0.95rem;
+}
+
+.side-menu a:hover {
+    background: #333;
+    color: white;
+}
+
+.side-menu a.active {
+    background: #444;
+    color: white;
+    font-weight: 500;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+
+    .sidebar {
+        width: 100%;
+        min-height: auto;
+        padding: 1rem;
+    }
+    
+    .sidebar .profile {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        text-align: left;
+        margin-bottom: 1rem;
+    }
+    
+    .avatar {
+        width: 50px;
+        height: 50px;
+        margin: 0;
+    }
+    
+    .side-menu {
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+    
+    .side-menu a {
+        padding: 0.5rem;
+    }
+    
+}
