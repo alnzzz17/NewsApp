@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tulis Berita Baru</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/navbar_style.css">
+    <link rel="stylesheet" href="../css/footer_style.css">
+    <link rel="stylesheet" href="../css/newsform_style.css">
+    <link rel="stylesheet" href="../css/authsidebar_style.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+
+<body>
+    <header id="navbar"></header>
+
+    <div class="content-wrapper">
+        <aside class="sidebar">
+            <div class="profile">
+                <div class="avatar">
+                    <img id="profileAvatar" src="" alt="Profile Picture">
+                </div>
+                <div class="name-role">
+                    <strong id="userName">Nama</strong>
+                    <span id="userRole">Role</span>
+                </div>
+            </div>
+            <div class="side-menu">
+                <!-- Di script -->
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <h1 id="formTitle">Tulis Berita Baru</h1>
+            <form id="formBerita">
+                <input type="hidden" id="newsId" name="id">
+                <div class="form-grid">
+                    <div class="form-left">
+                        <label for="judul">Judul Berita</label>
+                        <input type="text" name="title" id="judul" placeholder="Masukkan judul berita.." required>
+                        <label for="preview">Preview</label>
+                        <img id="imagePreview" src="#" alt="Preview Gambar" style="max-width: 100%; display: none;">
+                    </div>
+                    <div class="form-right">
+                        <label for="kategori">Kategori</label>
+                        <select name="categoryId" id="kategori" required>
+                            <option value="">Pilih kategori..</option>
+                        </select>
+                        <label for="gambar">Gambar</label>
+                        <input type="file" name="imageUrl" id="gambar" accept="image/*" required>
+                        <p class="note">Rekomendasi:<br>Ukuran & format gambar sesuai ketentuan</p>
+
+                        <div id="authorContainer" style="display: none; margin-top: 10px;">
+                            <label for="author">Jurnalis</label>
+                            <select name="authorId" id="author">
+                                <option value="">Pilih jurnalis..</option>
+                            </select>
+                        </div>
+
+                        <div id="statusContainer" style="margin-top: 10px;">
+                            <label for="status">Status</label>
+                            <select name="status" id="status" class="status-select">
+                                <option value="DRAFT">DRAFT</option>
+                                <option value="MENUNGGU VERIFIKASI">MENUNGGU VERIFIKASI</option>
+                                <option value="DITOLAK">DITOLAK</option>
+                                <option value="DIPUBLIKASIKAN">DIPUBLIKASIKAN</option>
+                            </select>
+                        </div>
+
+                    </div>
+                </div>
+                <label for="konten">Konten Berita</label>
+                <div id="editor" style="height: 200px;"></div>
+                <div class="form-actions">
+                    <button type="reset" class="btn-reset">Kosongkan</button>
+                    <button type="submit" class="btn-submit">Simpan</button>
+                </div>
+            </form>
+        </main>
+    </div>
+
+    <footer id="footer"></footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.min.js"></script>
+    <script src="../src/utils.js"></script>
+    <script src="../src/components/navbar.js"></script>
+    <script src="../src/components/footer.js"></script>
+    <script>
+        // Deklarasikan variabel quill di level global
+        let quill;
+
+        // Fungsi untuk generate menu sidebar berdasarkan role
+        function generateSideMenu(roleId) {
+            let menuItems = '';
+
+            // Common items for both roles
+            menuItems += '<a href="auth_dashboard.html">Dashboard</a>';
+            menuItems += '<a href="news_form.html">Tulis Berita</a>';
+            menuItems += '<a href="auth_newslist.html">Daftar Berita</a>';
+
+            // Admin-specific items
+            if (roleId === 1) {
+                menuItems += '<a href="daftar_user.html">Daftar User</a>';
+                menuItems += '<a href="tambah_user.html">Tambah User</a>';
+            }
+
+            // Common items for both roles
+            menuItems += '<a href="edit_profil.html">Edit Profil</a>';
+            menuItems += '<a href="#" onclick="handleLogout()">Logout</a>';
+
+            return menuItems;
+        }
+
+
+        document.addEventListener("DOMContentLoaded", async function () {
+            // Load navbar dan footer
+            try {
+                const [navbarHTML, footerHTML] = await Promise.all([
+                    renderNavbar(),
+                    renderFooter(),
+                ]);
+                document.getElementById("navbar").innerHTML = navbarHTML;
+                document.getElementById("footer").innerHTML = footerHTML;
+            } catch (error) {
+                console.error("Error loading components:", error);
+            }
+
+            // Cek autentikasi
+            const token = sessionStorage.getItem("token");
+            if (!token) {
+                window.location.href = "../pages/login.html";
+                return;
+            }
+
+            // Ambil data user untuk sidebar
+            try {
+                const userResponse = await fetch(`${BASE_URL}/api/user/me`, {
+                    headers: {
+                        "Authorization": `Bearer ${token}`,
+                        "Content-Type": "application/json"
+                    }
+                });
+
+                if (!userResponse.ok) throw new Error(`HTTP error! status: ${userResponse.status}`);
+
+                const userResult = await userResponse.json();
+
+                if (userResult.status === "success" && userResult.data) {
+                    const user = userResult.data;
+
+                    // Tampilkan info user di sidebar
+                    document.getElementById("userName").textContent = user.fullName || user.userName;
+                    document.getElementById("userRole").textContent = user.role?.name || (user.roleId === 1 ? "Admin" : "Jurnalis");
+
+                    // Tampilkan gambar profil
+                    const profileAvatar = document.getElementById("profileAvatar");
+                    if (user.profilePict) {
+                        profileAvatar.src = user.profilePict;
+                        profileAvatar.alt = "Profile Picture";
+                        profileAvatar.style.display = "block";
+
+                        // Fallback jika gambar gagal dimuat
+                        profileAvatar.onerror = function () {
+                            this.style.display = "none";
+                            const avatarContainer = document.querySelector(".avatar");
+                            avatarContainer.innerHTML = user.fullName
+                                ? user.fullName.charAt(0).toUpperCase()
+                                : '<i class="fas fa-user"></i>';
+                            avatarContainer.style.display = "flex";
+                            avatarContainer.style.alignItems = "center";
+                            avatarContainer.style.justifyContent = "center";
+                            avatarContainer.style.fontSize = "2rem";
+                            avatarContainer.style.backgroundColor = "#444";
+                            avatarContainer.style.color = "#fff";
+                        };
+                    } else {
+                        // Jika tidak ada gambar profil, tampilkan inisial
+                        const avatarContainer = document.querySelector(".avatar");
+                        avatarContainer.innerHTML = user.fullName
+                            ? user.fullName.charAt(0).toUpperCase()
+                            : '<i class="fas fa-user"></i>';
+                        avatarContainer.style.display = "flex";
+                        avatarContainer.style.alignItems = "center";
+                        avatarContainer.style.justifyContent = "center";
+                        avatarContainer.style.fontSize = "2rem";
+                        avatarContainer.style.backgroundColor = "#444";
+                        avatarContainer.style.color = "#fff";
+                    }
+
+                    const sideMenu = document.querySelector(".side-menu");
+                    const roleId = user.roleId || (user.role && user.role.id);
+                    sideMenu.innerHTML = generateSideMenu(roleId);
+
+                    // Show author dropdown for admin users
+                    if (user.roleId === 1 || (user.role && user.role.id === 1)) {
+                        document.getElementById("authorContainer").style.display = "block";
+
+                        // Fetch all journalists
+                        try {
+                            const response = await fetch(`${BASE_URL}/api/user/admin/get/journalists`, {
+                                headers: {
+                                    "Authorization": `Bearer ${token}`,
+                                    "Content-Type": "application/json"
+                                }
+                            });
+
+                            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
+                            const result = await response.json();
+
+                            if (result.status === "success" && Array.isArray(result.data)) {
+                                const authorSelect = document.getElementById("author");
+                                result.data.forEach(journalist => {
+                                    const option = document.createElement("option");
+                                    option.value = journalist.id;
+                                    option.textContent = journalist.fullName || journalist.userName;
+                                    authorSelect.appendChild(option);
+                                });
+                            }
+                        } catch (error) {
+                            console.error("Gagal memuat daftar jurnalis:", error);
+                        }
+                    }
+
+                    if (user.roleId === 1 || (user.role && user.role.id === 1)) {
+                        document.getElementById("statusContainer").innerHTML = `
+                        <label for="status">Status</label>
+                        <select name="status" id="status" class="status-select">
+                        <option value="DRAFT">DRAFT</option>
+                        <option value="MENUNGGU VERIFIKASI">MENUNGGU VERIFIKASI</option>
+                        <option value="DITOLAK">DITOLAK</option>
+                        <option value="DIPUBLIKASIKAN">DIPUBLIKASIKAN</option>
+                        </select>
+                    `;
+                    } else {
+                        // For non-admin users, show just the status indicator
+                        document.getElementById("statusContainer").innerHTML = `
+    <strong>Status: </strong>
+    <span id="statusIndicator" class="status-indicator status-DRAFT">DRAFT</span>
+  `;
+                    }
+                }
+            } catch (error) {
+                console.error("Gagal memuat data user:", error);
+                // Fallback ke data dari token jika endpoint /me gagal
+                const decodedUser = decodeToken(token);
+                if (decodedUser) {
+                    document.getElementById("userName").textContent = decodedUser.fullName || decodedUser.userName;
+                    document.getElementById("userRole").textContent = decodedUser.roleId === 1 ? "Admin" : "Jurnalis";
+                }
+            }
+
+            // Inisialisasi Quill editor
+            quill = new Quill("#editor", {
+                theme: "snow",
+                placeholder: "Tulis konten berita di sini...",
+                modules: {
+                    toolbar: [
+                        [{ header: [1, 2, false] }],
+                        ["bold", "italic", "underline", "strike"],
+                        [{ list: "ordered" }, { list: "bullet" }],
+                        ["link", "image"],
+                        ["clean"]
+                    ]
+                }
+            });
+
+            // Ambil data kategori dari API
+            try {
+                // Show loading state
+                const categorySelect = document.getElementById("kategori");
+                categorySelect.innerHTML = '<option value="">Pilih kategori...</option>';
+
+                const response = await fetch(`${BASE_URL}/api/categories`, {
+                    headers: {
+                        "Content-Type": "application/json"
+                    }
+                });
+
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
+                const result = await response.json();
+
+                // Kosongkan dropdown kecuali option pertama
+                while (categorySelect.options.length > 1) {
+                    categorySelect.remove(1);
+                }
+
+                if (result.status === "success" && Array.isArray(result.data)) {
+                    // Isi dropdown dengan kategori dari API
+                    result.data.forEach(category => {
+                        const option = document.createElement("option");
+                        option.value = category.id;
+                        option.textContent = category.name;
+                        categorySelect.appendChild(option);
+                    });
+                } else {
+                    // Fallback to default categories if API returns unexpected format
+                    const defaultCategories = [
+                        { id: 1, name: "Politik" },
+                        { id: 2, name: "Ekonomi" },
+                        { id: 3, name: "Olahraga" },
+                        { id: 4, name: "Hiburan" },
+                        { id: 5, name: "Teknologi" }
+                    ];
+
+                    defaultCategories.forEach(category => {
+                        const option = document.createElement("option");
+                        option.value = category.id;
+                        option.textContent = category.name;
+                        categorySelect.appendChild(option);
+                    });
+
+                    console.warn("Using fallback categories due to API response format issue");
+                }
+            } catch (error) {
+                console.error("Gagal memuat kategori:", error);
+
+                // Show user-friendly error and fallback
+                const categorySelect = document.getElementById("kategori");
+                categorySelect.innerHTML = `
+        <option value="">Gagal memuat kategori</option>
+        <option value="1">Politik</option>
+        <option value="2">Ekonomi</option>
+        <option value="3">Olahraga</option>
+        <option value="4">Hiburan</option>
+        <option value="5">Teknologi</option>
+    `;
+
+                alert("Gagal memuat daftar kategori. Menggunakan daftar default.");
+            }
+
+            // Cek apakah ada ID berita di URL (mode edit)
+            const urlParams = new URLSearchParams(window.location.search);
+            const newsId = urlParams.get('id');
+
+            if (newsId) {
+                document.getElementById("newsId").value = newsId;
+                document.getElementById("formTitle").textContent = "Edit Berita";
+
+                try {
+                    // Ambil data berita yang akan diedit
+                    const response = await fetch(`${BASE_URL}/api/news/get/${newsId}`, {
+                        headers: {
+                            "Authorization": `Bearer ${token}`,
+                            "Content-Type": "application/json"
+                        }
+                    });
+
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
+                    const result = await response.json();
+
+                    if (result.status === "success" && result.data) {
+                        const news = result.data;
+
+                        // Isi form dengan data berita
+                        document.getElementById("judul").value = news.title || '';
+                        document.getElementById("kategori").value = news.categoryId || '';
+                        quill.root.innerHTML = news.content || '';
+
+                        // Get user data from token if API call fails
+                        const decodedUser = decodeToken(token);
+
+                        // Jika admin, isi dropdown jurnalis dengan penulis berita
+                        if (decodedUser && (decodedUser.roleId === 1 || (decodedUser.role && decodedUser.role.id === 1))) {
+                            const authorSelect = document.getElementById("author");
+                            // Set nilai authorId dari berita yang sedang diedit
+                            if (news.authorId) {
+                                authorSelect.value = news.authorId;
+                            }
+                        }
+
+                        // Update status indicator
+                        const statusIndicator = document.getElementById("statusIndicator");
+                        if (news.status) {
+                            if (decodedUser && (decodedUser.roleId === 1)) {
+                                // For admin, set the selected option in dropdown
+                                document.getElementById("status").value = news.status;
+                            } else {
+                                // For non-admin, update the status indicator
+                                const statusClass = `status-${news.status.replace(/\s+/g, '_')}`;
+                                statusIndicator.textContent = news.status;
+                                statusIndicator.className = `status-indicator ${statusClass}`;
+                            }
+                        }
+
+                        // Jika ada gambar, tampilkan preview
+                        if (news.image_url) {
+                            document.getElementById("imagePreview").src = news.image_url;
+                            document.getElementById("imagePreview").style.display = "block";
+                            document.getElementById("gambar").required = false;
+                        }
+                    }
+                } catch (error) {
+                    console.error("Gagal memuat data berita:", error);
+                    alert(`Gagal memuat data berita: ${error.message}`);
+                }
+            }
+
+            // Event listener untuk preview gambar
+            const imageInput = document.getElementById("gambar");
+            const imagePreview = document.getElementById("imagePreview");
+
+            imageInput.addEventListener("change", function () {
+                const file = this.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function (e) {
+                        imagePreview.src = e.target.result;
+                        imagePreview.style.display = "block";
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+
+            // Event listener untuk form submit
+            const form = document.getElementById("formBerita");
+            form.addEventListener("submit", async function (e) {
+                e.preventDefault();
+
+                const token = sessionStorage.getItem("token");
+                if (!token) {
+                    alert("Anda harus login terlebih dahulu");
+                    return;
+                }
+
+                const newsId = document.getElementById("newsId").value;
+                const isEditMode = !!newsId;
+                const formData = new FormData();
+
+                formData.append("title", document.getElementById("judul").value);
+                formData.append("categoryId", document.getElementById("kategori").value);
+                formData.append("content", quill.root.innerHTML);
+
+                // Jika admin, tambahkan authorId ke formData
+                const userRole = document.getElementById("userRole").textContent;
+                if (userRole === "Admin") {
+                    const authorId = document.getElementById("author").value;
+                    if (authorId) formData.append("authorId", authorId);
+
+                    const status = document.getElementById("status").value;
+                    formData.append("status", status);
+                }
+
+                const imageFile = imageInput.files[0];
+                if (imageFile) formData.append("imageUrl", imageFile);
+
+                try {
+                    let url, method;
+                    if (isEditMode) {
+                        if (userRole === "Admin") {
+                            url = `${BASE_URL}/api/news/admin/update/${newsId}`;
+                        } else {
+                            url = `${BASE_URL}/api/news/edit/${newsId}`;
+                        }
+                        method = "PUT";
+                    } else {
+                        url = `${BASE_URL}/api/news/new`;
+                        method = "POST";
+                    }
+
+                    const response = await fetch(url, {
+                        method: method,
+                        headers: {
+                            "Authorization": `Bearer ${token}`
+                        },
+                        body: formData
+                    });
+
+                    const result = await response.json();
+
+                    if (response.ok && result.status === "success") {
+                        alert(`Berita berhasil ${isEditMode ? 'diperbarui' : 'ditambahkan'}!`);
+                        window.location.href = "auth_newslist.html";
+                    } else {
+                        throw new Error(result.message || `Gagal ${isEditMode ? 'memperbarui' : 'menambahkan'} berita`);
+                    }
+                } catch (error) {
+                    console.error("Error:", error);
+                    alert(`Error: ${error.message}`);
+                }
+            });
+        });
+
+        // Fungsi untuk decode token JWT
+        function decodeToken(token) {
+            try {
+                const base64Url = token.split('.')[1];
+                const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                const jsonPayload = decodeURIComponent(
+                    atob(base64)
+                        .split('')
+                        .map(function (c) {
+                            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+                        })
+                        .join('')
+                );
+                return JSON.parse(jsonPayload);
+            } catch (error) {
+                console.error("Invalid token", error);
+                return null;
+            }
+        }
+
+        function handleLogout() {
+            if (confirm("Apakah Anda yakin ingin logout?")) {
+                sessionStorage.removeItem("token");
+                sessionStorage.removeItem("userData");
+                window.location.href = "../pages/login.html";
+            }
+        }
+    </script>
+</body>
+
+</html>

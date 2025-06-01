@@ -1,0 +1,160 @@
+form#formBerita {
+    background-color: #fff;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+}
+
+.form-grid {
+    display: flex;
+    gap: 2rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.5rem;
+}
+
+.form-left,
+.form-right {
+    flex: 1 1 300px;
+    min-width: 280px;
+}
+
+label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: #333;
+}
+
+input[type="text"],
+select,
+input[type="file"] {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    margin-bottom: 1.25rem;
+    font-size: 0.95rem;
+}
+
+.image-preview,
+#imagePreview {
+    width: 100%;
+    height: 200px;
+    background-color: #eee;
+    border: 1px dashed #bbb;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #999;
+    margin-bottom: 1rem;
+    object-fit: cover;
+    border-radius: 4px;
+}
+
+.note {
+    font-size: 0.85rem;
+    color: #777;
+    margin-top: -1rem;
+}
+
+#editor {
+    background-color: #fff;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 0;
+    min-height: 200px;
+    margin-bottom: 1.5rem;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.btn-reset,
+.btn-submit {
+    padding: 0.5rem 1.5rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-weight: 500;
+    transition: background-color 0.2s ease;
+}
+
+.btn-reset {
+    background-color: #dc3545;
+    color: #fff;
+}
+
+.btn-submit {
+    background-color: #007bff;
+    color: #fff;
+}
+
+.btn-reset:hover {
+    background-color: #c82333;
+}
+
+.btn-submit:hover {
+    background-color: #0069d9;
+}
+
+@media (max-width: 768px) {
+    .form-grid {
+        flex-direction: column;
+    }
+
+    .form-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .btn-reset,
+    .btn-submit {
+        width: 100%;
+    }
+}
+
+.status-select {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    margin-top: 5px;
+}
+
+.status-select option {
+    padding: 5px;
+}
+
+/* status indicator styles for non-admin users */
+.status-indicator {
+    margin-top: 10px;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-weight: 500;
+    display: inline-block;
+}
+
+.status-DRAFT {
+    background-color: #f0f0f0;
+    color: #555;
+}
+
+.status-MENUNGGU_VERIFIKASI {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.status-DITOLAK {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+.status-DIPUBLIKASIKAN {
+    background-color: #d4edda;
+    color: #155724;
+}
